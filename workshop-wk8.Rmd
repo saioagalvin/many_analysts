@@ -1,0 +1,259 @@
+---
+title: 'Statistics in Education: Workshop Wk8'
+author: "George Kinnear"
+date: "2026-11-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+# set the default plot style
+theme_set(theme_minimal())
+```
+
+# Getting started with Assignment 2
+
+For A2 you will be working in teams of 4.
+
+Teams work better when members have a common understanding of the group's goals and ways of working together. Each person will have their own preferred goals and ways of working, which may be very different.
+
+So, before starting work on the project, discuss the prompts below to share your thoughts and ideas, and reach agreement within your group. This should prevent misunderstandings in the future!
+
+-   When will the group attempt to meet (what time, how often, where, how long)?
+
+-   When is it OK to skip a meeting?
+
+-   How will we behave in meetings (for example, interrupting, or use of mobile phones)?
+
+-   How do we communicate with each other outside of meetings? (e.g., what if you are running late to a meeting?)
+
+-   How will we share files that we are working on together?
+
+-   How will we deal with problems, like chronic lateness to meetings or team members not doing their fair share of work?
+
+-   How will we celebrate when somebody has a good idea?
+
+# SMARVUS dataset
+
+We will begin to explore the dataset described in this paper:
+
+> Terry, J., et al. (2023). Data from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset). Journal of Open Psychology Data, 11(1), 8. <https://doi.org/10.5334/jopd.80>
+
+The full dataset is openly available at <https://osf.io/374vn/> - however the full .csv file is 68MB so for now we will start with just a slice of the data!
+
+This will load a copy of the data that has been filtered to just the 413 responses from the University of Sussex:
+
+```{r}
+smarvus_sussex <- readRDS(gzcon(url("https://www.maths.ed.ac.uk/gkinnear/datasets/smarvus_sussex.Rds")))
+```
+
+You should also download and open a copy of the codebook, which lists all the variables in the data and gives further details about them:
+
+-   <https://osf.io/download/cruyz/>
+
+## Exclusions
+
+Section 2.6 of the paper summarises the various "attention checks" that were built in to the survey:
+
+> At the end of the student survey, participants were asked whether they had answered all questions truthfully and carefully, to which 10,281 (81.8%) responded “yes”, 172 (1.4%) responded “no”, and 2,117 (16.8%) responses are missing (where participants did not reach that stage of the survey).
+>
+> Additionally, six attention checks were embedded within the measurement scales which asked participants to select a specific response (e.g., “please select ‘1 strongly disagree’”). There were two in the first block which contained the statistics and mathematics anxiety measures and four in the second block which contained all other scales. In the first block, 2,052 (16.3%) of participants responded incorrectly to the first check and 2,194 (17.5%) responded incorrectly to the second. In the second block, the number of students responding incorrectly to each check were 2,779 (22.1%) to the third, 2,812 (22.4%) to the fourth, 2,872 (22.9%) to the fifth, and 2,752 (21.9%) to the sixth.
+
+Those numbers are for the full dataset. For the Sussex subset, you should find that:
+
+-   On the final "attention amnesty" question, 393 students passed the check
+-   On the first attention check question (within the STARS scale), 401 students passed the check
+-   On the second attention check question (within the STARS-M scale), 393 students passed the check
+
+### 📝 Task 1
+
+(a) Write your own code to find the number of students passing each check, and compare your results with the numbers given above.
+
+(b) Produce a filtered dataset `smarvus_sussex_filtered` with only responses that passed ALL attention checks. It should contain 375 responses.
+
+```{r}
+
+smarvus_sussex %>%
+  select(contains("amnesty"), contains("attention"), matches("Q7.1_24"), matches("Q8.1_21"),matches("Q9.1_22"),matches("Q11.1_9"),matches("Q13.1_17"),matches("Q15.1_9")) %>%
+  map(table, useNA = "ifany")
+
+smarvus_sussex %>%
+  summarise(
+    passed_amnesty = sum(attention_amnesty == "Yes", na.rm = TRUE),
+    passed_check1  = sum(Q7.1_24 == 1, na.rm = TRUE),
+    passed_check2  = sum(Q8.1_21 == 5, na.rm = TRUE),
+    passed_check3 = sum(Q9.1_22 == 1, na.rm=TRUE),
+    passed_check4 = sum(Q11.1_9 == 3, na.rm=TRUE),
+    passed_check5 = sum(Q13.1_17 == 2, na.rm=TRUE),
+    passed_check6 = sum(Q15.1_9 == 4, na.rm=TRUE)
+  )
+
+smarvus_sussex_filtered <- smarvus_sussex %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    
+  )
+
+nrow(smarvus_sussex_filtered)
+
+#Q9.1_22 == 1,
+#Q11.1_9 == 3,
+#Q13.1_17 == 2,
+#Q15.1_9 == 4
+
+```
+
+## Scoring STARS
+
+The 23 STARS items appear as Q7.1_1 to Q7.1_23, with responses on a 5-point scale:
+
+> 1 = no anxiety, 2, 3, 4, 5 = a great deal of anxiety
+
+The overall score for STARS comes from adding up the 23 responses, so scores should be within the range 23 to 115.
+
+### 📝 Task 2
+
+(a) Create a new copy of the filtered dataset called `smarvus_sussex_scored`, which adds a `stars_score` column containing the total score on STARS for each participant.
+
+(b) Produce some summary statistics for the STARS scores, and a visualisation of the distribution. (You should find that the mean STARS score in this sample is 70.189.)
+
+```{r}
+
+```
+
+## Grades
+
+The dataset includes various columns with `grade` at the start of their name, giving details of the student's eventual grade on the statistics module that they were taking at the time of completing the survey.
+
+The `grade` column reports the student's grade, while the other `grade_*` columns add further context. In particular, they give the range of the scale that the grades are on. At the University of Sussex, the grades range from 0 to 100 (just like here) -- but this is not the case for every university in the full dataset!
+
+### 📝 Task 3
+
+Clean the `grade` data, producing a true numerical value for each student where a grade is available. (The grades from Sussex are in the form of strings, like "62.00%" rather than numeric values like 62.)
+
+Just as you did for the STARS scores, produce some summary statistics and a visualisation of the grade distribution.
+
+```{r}
+
+smarvus_sussex_clean <- smarvus_sussex_filtered %>% 
+  mutate(grade_numeric = parse_number(grade))
+
+grade_summary <- smarvus_sussex_clean %>%
+  summarise(
+    n_students = sum(!is.na(grade_numeric)),
+    n_missing  = sum(is.na(grade_numeric)),
+    mean_grade = mean(grade_numeric, na.rm = TRUE),
+    median_grade = median(grade_numeric, na.rm = TRUE),
+    sd_grade   = sd(grade_numeric, na.rm = TRUE),
+    min_grade  = min(grade_numeric, na.rm = TRUE),
+    max_grade  = max(grade_numeric, na.rm = TRUE)
+  )
+
+print(grade_summary)
+
+ggplot(smarvus_sussex_clean, aes(x = grade_numeric)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 20, fill = "lightgreen", color = "white", alpha = 0.7) +
+  geom_density(color = "darkgreen", linewidth = 1) +
+  labs(
+    title = "Distribution of Statistics Module Grades",
+    subtitle = "University of Sussex subset",
+    x = "Grade (%)",
+    y = "Density"
+  ) +
+  theme_minimal()
+
+```
+
+## Relationship between anxiety and grades
+
+You should now be in a position to make a first attempt at addressing the overall research question from A2: "What effect does statistics anxiety have on attainment?" -- using a simple correlation between the two measures that we looked at above.
+
+### 📝 Task 4
+
+(a) Produce a scatterplot of STARS scores against grades.
+
+(b) Use `cor.test` to find the correlation between the two variables. How do you interpret the result?
+
+(c) Use `effectsize::r_to_d` (as demonstrated in the week 8 lecture) to express the correlation as a Cohen's d effect size.
+
+```{r}
+
+```
+
+## Relationship between prior mathematics study and grades
+
+The SMARVUS data includes various categorical columns, such as age and gender. You may want to explore some of these for your analysis.
+
+Purely for the purposes of practicing computing a Cohen's d effect size, we will explore one of these: `math_edu_level`, where respondents answered "What is your highest level of mathematics education/grade for which you took courses in high school?"
+
+### 📝 Task 5
+
+(a) Produce a summary of the values of `math_edu_level` in the Sussex sample.
+
+(b) Focus on the GCSE and A-Level groups. Compare the mean performance (`grade`) of the students in these two groups: produce a visualisation, and compute the standardised mean difference (Cohen's d). How does this compare to the d from Task 4?
+
+```{r}
+
+```
+
+## Relationship between anxiety measures
+
+As well as the STARS measure of statistics anxiety, the survey includes:
+
+-   R-MARS, an existing measure of mathematics anxiety (20 items),
+-   STARS-M, a modified version of STARS, replacing "statistics" with "mathematics" (23 items, including 3 shared with STARS),
+-   R-MARS-S, a modified version of R-MARS, replacing "mathematics" with "statistics" (20 items, including 1 shared with R-MARS).
+
+One of the goals of the SMARVUS project was to investigate the relationship between these different measures, so let's take a look.
+
+### 📝 Task 6
+
+Compute the participants' scores for at least one of the other measures (or all three if you like), and investigate the correlation with STARS.
+
+```{r}
+
+```
+
+## Going further with the data
+
+These are some points that you will need to explore as you go further with A2. You might want to divide these up within your group to make some progress in parallel.
+
+### Grades
+
+As noted earlier, not all of the universities in the sample use the 0-100 scale:
+
+-   some use other numerical scales, like 0-10 or 0-20
+-   at least one uses a reverse numerical scale, 5=lowest to 1=highest
+-   some use letter grades, like A+, which come with an indication of the corresponding range of numerical scores in the `grade_category_notes` column.
+
+You could download the full dataset and take a look at the columns that start with "grade" to see the variety of approaches.
+
+```{r eval=FALSE}
+# to download the full 68MB dataset, you can use:
+smarvus_raw <- read_csv("https://osf.io/download/a4zmv/")
+
+# To avoid downloading the file many times, save a copy as smarvus_complete_050524.csv and load that in future:
+smarvus_raw %>% write_csv("smarvus_complete_050524.csv")
+smarvus_raw <- read_csv("smarvus_complete_050524.csv")
+```
+
+How will you address the diversity of grading scales in your analysis?
+
+### Other variables
+
+Spend some time reading the SMARVUS paper and making notes about ideas for your analysis plan.
+
+In particular:
+
+-   **Section 2.4** describes the approach to the student survey, and gives some details about the demographic part of the survey. Are there any variables here that you think would be important for your analysis?
+
+-   **Section 2.5** describes the various measures included in the survey. So far we have mainly looked at STARS, but maybe there are other relevant measures to consider for your analysis. In particular, R-MARS-S gives another way of measuring statistics anxiety.
+
+### Possible analyses
+
+Write down at least 3 plausible analyses that you could use to address the research question. Discuss the pros and cons of each within your group.
