@@ -124,6 +124,42 @@ The overall score for STARS comes from adding up the 23 responses, so scores sho
 
 ```{r}
 
+stars_totals <- smarvus_sussex_filtered %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  )
+
+smarvus_sussex_scored <- smarvus_sussex_filtered %>%
+  left_join(stars_totals, by = "unique_id")
+
+stars_summary <- smarvus_sussex_scored %>%
+  summarise(
+    mean_score   = mean(stars_score, na.rm = TRUE),
+    median_score = median(stars_score, na.rm = TRUE),
+    sd_score     = sd(stars_score, na.rm = TRUE),
+    min_score    = min(stars_score, na.rm = TRUE),
+    max_score    = max(stars_score, na.rm = TRUE)
+  )
+
+print(stars_summary)
+
+ggplot(smarvus_sussex_scored, aes(x = stars_score)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 20, fill = "pink", color = "white", alpha = 0.7) +
+  geom_density(color = "deeppink4", linewidth = 1) +
+  labs(
+    title = "Distribution of Statistics Anxiety Scores (STARS)",
+    subtitle = "University of Sussex subset (Filtered)",
+    x = "Total STARS Score (Range: 23 - 115)",
+    y = "Density"
+  ) +
+  theme_minimal()
+
 ```
 
 ## Grades
@@ -140,7 +176,7 @@ Just as you did for the STARS scores, produce some summary statistics and a visu
 
 ```{r}
 
-smarvus_sussex_clean <- smarvus_sussex_filtered %>% 
+smarvus_sussex_clean <- smarvus_sussex_scored %>% 
   mutate(grade_numeric = parse_number(grade))
 
 grade_summary <- smarvus_sussex_clean %>%
@@ -183,6 +219,24 @@ You should now be in a position to make a first attempt at addressing the overal
 
 ```{r}
 
+ggplot(smarvus_sussex_clean, aes(x = stars_score, y = grade_numeric)) +
+  geom_point(alpha = 0.6, color = "steelblue") +
+  geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
+  labs(
+    title = "Relationship Between Statistics Anxiety and Module Grades",
+    subtitle = "University of Sussex subset (Filtered)",
+    x = "Total STARS Score (23 - 115)",
+    y = "Statistics Module Grade (%)"
+  ) +
+  theme_minimal()
+
+cor_result <- cor.test(smarvus_sussex_clean$stars_score, smarvus_sussex_clean$grade_numeric)
+print(cor_result)
+
+effectsize::r_to_d(cor_result$estimate)
+
+
+
 ```
 
 ## Relationship between prior mathematics study and grades
@@ -199,7 +253,45 @@ Purely for the purposes of practicing computing a Cohen's d effect size, we will
 
 ```{r}
 
+smarvus_sussex_clean %>%
+  count(math_edu_level, sort = TRUE)
+
+smarvus_sussex_clean %>%
+  group_by(math_edu_level) %>%
+  summarise(
+    n            = n(),
+    n_with_grade = sum(!is.na(grade_numeric)),
+    mean_grade   = mean(grade_numeric, na.rm = TRUE),
+    sd_grade     = sd(grade_numeric, na.rm = TRUE)
+  )
+
+gcse_alevel <- smarvus_sussex_clean %>%
+  filter(math_edu_level %in% c("GCSE", "A Level")) %>%
+  mutate(math_edu_level = factor(math_edu_level, levels = c("GCSE", "A Level")))
+
+ggplot(gcse_alevel, aes(x = math_edu_level, y = grade_numeric, fill = math_edu_level)) +
+  geom_boxplot(alpha = 0.5, width = 0.4, outlier.shape = NA) +
+  geom_jitter(width = 0.12, alpha = 0.5, color = "steelblue") +
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 4, color = "firebrick") +
+  labs(
+    title = "Statistics Module Grades by Prior Maths Education",
+    subtitle = "Red blob is mean",
+    x = "Highest High-School Maths Qualification",
+    y = "Statistics Module Grade (%)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+library(effectsize)
+
+d_math_edu <- cohens_d(grade_numeric ~ math_edu_level, data = gcse_alevel)
+print(d_math_edu)
+
 ```
+## Task 4 vs Task 5
+
+In Task 4 the correlation is r = -0.206 showing a weak correlation between statistics anxiety (stars_score) and statistics grades (grade_numeric). As anxiety increases, grades tend to decrease. p= 0.00017<0.001 and so this relationship is statistically significant. Additionally the CI [-0.308,-0.100] does not cross zero. Cohen's d is d = -0.42 compared with d = -0.35 for Task 5. Thus, for both tasks we have a comparable effect of statistics anxiety. Higher statistics anxiety reduces performance while having more advanced high school maths (A Level vs. GCSE) provides a corresponding increase.
+
 
 ## Relationship between anxiety measures
 
@@ -216,6 +308,84 @@ One of the goals of the SMARVUS project was to investigate the relationship betw
 Compute the participants' scores for at least one of the other measures (or all three if you like), and investigate the correlation with STARS.
 
 ```{r}
+
+# 1. STARS Score 
+stars_totals <- smarvus_sussex_filtered %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS, na.rm = TRUE)
+  )
+
+# 2. STARS-M Score 
+stars_m_totals <- smarvus_sussex_filtered %>%
+  subset(select = -c(Q8.1_21)) %>%
+  pivot_longer(
+    cols = starts_with("Q8.1_"),
+    values_to = "STARS_M"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_m_score = sum(STARS_M, na.rm = TRUE)
+  )
+
+# 3. R-MARS Score 
+rmars_totals <- smarvus_sussex_filtered %>%
+  subset(select = -c(Q8.2_21, Q8.2_22, Q8.2_23, Q8.2_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q8.2_"),
+    values_to = "R_MARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    rmars_score = sum(R_MARS, na.rm = TRUE)
+  )
+
+# 4. R-MARS-S Score 
+rmars_s_totals <- smarvus_sussex_filtered %>%
+  subset(select = -c(Q7.2_20, Q7.2_21, Q7.2_22, Q7.2_23)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.2_"),
+    values_to = "R_MARS_S"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    rmars_s_score = sum(R_MARS_S, na.rm = TRUE)
+  )
+
+
+smarvus_all_scores <- smarvus_sussex_filtered %>%
+  left_join(stars_totals, by = "unique_id") %>%
+  left_join(stars_m_totals, by = "unique_id") %>%
+  left_join(rmars_totals, by = "unique_id") %>%
+  left_join(rmars_s_totals, by = "unique_id")
+
+
+anxiety_corrs <- smarvus_all_scores %>%
+  select(stars_score, stars_m_score, rmars_score, rmars_s_score) %>%
+  cor(use = "complete.obs")
+
+print(anxiety_corrs)
+
+
+cor_long <- as.data.frame(as.table(anxiety_corrs))
+
+ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
+                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
+  geom_text(aes(label = round(Freq, 2)), color = "black", size = 4.5) +
+  theme_minimal() +
+  labs(
+    title = "Correlation Heatmap of Anxiety Measures",
+    x = "", 
+    y = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
