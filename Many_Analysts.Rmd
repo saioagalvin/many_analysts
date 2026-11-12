@@ -1,0 +1,29 @@
+---
+title: "Many Analysts"
+authors: "Anonymous or not?"
+date: ""
+fontsize: 12pt
+output:
+  pdf_document:
+    number_sections: true
+    fig_caption: true
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{float}
+- \usepackage{amsmath}
+- \usepackage{graphicx}
+- \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo      = FALSE,    # This hides all code from the main body 
+  message   = FALSE, 
+  warning   = FALSE
+)
+source('uk_smarvus_code.R')
+
+```
