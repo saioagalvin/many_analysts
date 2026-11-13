@@ -20,10 +20,44 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo      = FALSE,    # This hides all code from the main body 
+  echo      = TRUE,    # This shows all code from the main body but will need to be changed                         # for code we want invisible 
   message   = FALSE, 
   warning   = FALSE
 )
 source('uk_smarvus_code.R')
+
+```
+# What effect does statistics anxiety have on attainment?
+## Effect Size Summary
+
+d = `r variable_name`, 95% CI [`r variable_name`, `r variable_name`], based on N = `r variable_name`
+
+
+## Summary of Analysis Approach (max 100 words)
+
+
+
+
+
+## Details of the Analysis
+The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) @SMARVUS_paper. This dataset contains survey responses from N = 12,570 students from 100 universities in 35 countries, collected in 21 languages. They attempted to measure anxieties (statistics, mathematics, test, trait, social interaction, performance, creativity, intolerance of uncertainty, and fear of negative evaluation), self-efficacy, persistence, and the cognitive reflection test, and collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
+ 
+ 
+Various "attention checks" were built in to the survey. We decided to filter the data by ... because ... We also chose to only include UK universities in our analysis because ... Any other cleaning decisions.... because... 
+ ``` {r}
+ # code exploratory analysis justifying choices if needed + filters
+ ```
+ We decided to ..... (analysis choices) because....
+ ``` {r}
+ # code for analysis
+ ```
+```{references, include=FALSE}
+@article{SMARVUS_paper,
+  title={Data from an international multi-centre study of statistics and mathematics anxieties and related variables in university students (the SMARVUS dataset)},
+  author={Terry, J. and Tip, L. and Lea, C. and Flack, Z.M. and Brolly, M.},
+  journal={Journal of Open Psychology Data},
+  year={2023}
+}
+
 
 ```
