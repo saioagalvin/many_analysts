@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
   message   = FALSE, 
   warning   = FALSE
 )
-source('uk_smarvus_code.R')
+source('code.R')
 
 ```
 # What effect does statistics anxiety have on attainment?
@@ -41,16 +41,27 @@ d = `r variable_name`, 95% CI [`r variable_name`, `r variable_name`], based on N
 
 ## Details of the Analysis
 The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) @SMARVUS_paper. This dataset contains survey responses from N = 12,570 students from 100 universities in 35 countries, collected in 21 languages. They attempted to measure anxieties (statistics, mathematics, test, trait, social interaction, performance, creativity, intolerance of uncertainty, and fear of negative evaluation), self-efficacy, persistence, and the cognitive reflection test, and collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
+
+We chose to only include UK universities in our analysis because it is the country with the most observations, at 2962, making up around 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between subjects that could affect grades or maths anxiety.
  
- 
-Various "attention checks" were built in to the survey. We decided to filter the data by ... because ... We also chose to only include UK universities in our analysis because ... Any other cleaning decisions.... because... 
- ``` {r}
- # code exploratory analysis justifying choices if needed + filters
- ```
- We decided to ..... (analysis choices) because....
- ``` {r}
- # code for analysis
- ```
+Six "attention checks" were built in to the survey, which we used to filter out any participant that weren't paying attention to the questions, as this would invalidate their other responses (10.36%). Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (1.01%), as well as students that responded "Yes" to the question "You have just answered three reasoning problems. Did you look any of the answers up online?" (1.93%). 
+
+Additionally, we filtered our data to only include Psychology undergraduate students, as they made up the majority of degree majors at the UK universities surveyed (93.0%), and this would also improve the strength of our comparisons between students, as different course demands and difficulty levels would also affect anxiety levels.
+
+We also noticed that the amount of missingness varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations in 3rd and 4th year were almost completely missing.
+
+``` {r na grades by degree}
+grade_na_bydegree
+```
+
+We can aslo examine the distribution of the grades to see that the majority lie around 65%. 
+
+``` {r grades histogram}
+grades_hist
+```
+
+EDA for STARS below...
+
 ```{references, include=FALSE}
 @article{SMARVUS_paper,
   title={Data from an international multi-centre study of statistics and mathematics anxieties and related variables in university students (the SMARVUS dataset)},
