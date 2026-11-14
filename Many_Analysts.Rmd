@@ -30,7 +30,7 @@ source('code.R')
 # What effect does statistics anxiety have on attainment?
 ## Effect Size Summary
 
-d = `r variable_name`, 95% CI [`r variable_name`, `r variable_name`], based on N = `r variable_name`
+d = `r grades_d`, 95% CI [`r grades_cor_result$conf.int`], based on N = `r N`.
 
 
 ## Summary of Analysis Approach (max 100 words)
@@ -50,17 +50,21 @@ Additionally, we filtered our data to only include Psychology undergraduate stud
 
 We also noticed that the amount of missingness varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations in 3rd and 4th year were almost completely missing.
 
-``` {r na grades by degree}
+``` {r na_grades_by_degree}
 grade_na_bydegree
 ```
 
 We can aslo examine the distribution of the grades to see that the majority lie around 65%. 
 
-``` {r grades histogram}
+``` {r grades_histogram}
 grades_hist
 ```
 
 EDA for STARS below...
+
+Discussion of relationships between variables and maths anxiety..
+
+Discussion of 
 
 ```{references, include=FALSE}
 @article{SMARVUS_paper,

@@ -153,9 +153,6 @@ grade_na_bydegree <- ggplot(degree_nas_long,
 
 grade_na_bydegree
 
-# after making all missing into NA, missingness seems fairly uniform across years
-# so maybe just need to accept that
-
 grade_summary <- smarvus_uk_clean %>%
   summarise(
     n_students = sum(!is.na(grade_numeric)),
@@ -169,7 +166,12 @@ grade_summary <- smarvus_uk_clean %>%
 
 print(grade_summary)
 
-grades_hist <- ggplot(smarvus_uk_clean, aes(x = grade_numeric)) +
+# after making all missing into NA, missingness seems fairly uniform across years
+# so maybe just need to remove all rows with missing grades
+smarvus_uk_cleangrades <- smarvus_uk_clean[!is.na(smarvus_uk_clean$grade_numeric), ]
+N <- nrow(smarvus_uk_cleangrades)
+
+grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   geom_histogram(
     aes(y = after_stat(density)), 
     bins = 20, 
@@ -191,7 +193,7 @@ grades_hist
 
 # maths/stats anxiety columns --------------------------------------------------
 
-stars_totals <- smarvus_uk_clean %>%
+stars_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q7.1_24)) %>%
   pivot_longer(
     cols = starts_with("Q7.1_"),
@@ -204,7 +206,7 @@ stars_totals <- smarvus_uk_clean %>%
 
 stars_totals
 
-smarvus_uk_scored <- smarvus_uk_clean %>%
+smarvus_uk_scored <- smarvus_uk_cleangrades %>%
   left_join(stars_totals, by = "unique_id")
 
 stars_summary <- smarvus_uk_scored %>%
@@ -243,18 +245,18 @@ ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_numeric)) +
   ) +
   theme_minimal()
 
-cor_result <- cor.test(smarvus_uk_scored$stars_score, smarvus_uk_scored$grade_numeric)
-print(cor_result)
+grades_cor_result <- cor.test(smarvus_uk_scored$stars_score, smarvus_uk_scored$grade_numeric)
+print(grades_cor_result)
 
-effectsize::r_to_d(cor_result$estimate)
+grades_d <- effectsize::r_to_d(grades_cor_result$estimate)
 
 
 # investigating relationship between historic attainment and current grade -----
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   count(math_edu_level, sort = TRUE)
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   group_by(math_edu_level) %>%
   summarise(
     n            = n(),
@@ -263,7 +265,7 @@ smarvus_uk_clean %>%
     sd_grade     = sd(grade_numeric, na.rm = TRUE)
   )
 
-gcse_alevel <- smarvus_uk_clean %>%
+gcse_alevel <- smarvus_uk_cleangrades %>%
   filter(math_edu_level %in% c("GCSE", "A Level")) %>%
   mutate(math_edu_level = factor(math_edu_level, levels = c("GCSE", "A Level")))
 
@@ -288,10 +290,10 @@ print(d_math_edu)
 
 # investigating relationship between gender and current grade ------------------
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   count(gender, sort = TRUE)
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   group_by(gender) %>%
   summarise(
     n            = n(),
@@ -301,7 +303,7 @@ smarvus_uk_clean %>%
   )
 
 # making gender into a factor
-smarvus_gender <- smarvus_uk_clean %>%
+smarvus_gender <- smarvus_uk_cleangrades %>%
   mutate(gender = factor(gender, levels = c("Female/Woman", "Male/Man", "Another Gender")))
 
 ggplot(smarvus_gender, aes(x = gender, y = grade_numeric, fill = gender)) +
@@ -325,10 +327,10 @@ anova(lm(grade_numeric ~ gender, data = smarvus_gender))
 
 # investigating relationship between age and current grade ---------------------
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   count(age, sort = TRUE)
 
-smarvus_uk_clean %>%
+smarvus_uk_cleangrades %>%
   group_by(age) %>%
   summarise(
     n            = n(),
@@ -338,7 +340,7 @@ smarvus_uk_clean %>%
   )
 
 # making age into a factor
-smarvus_age <- smarvus_uk_clean %>%
+smarvus_age <- smarvus_uk_cleangrades %>%
   mutate(age = factor(age, levels = c("18-21", "22-25", "26+")))
 
 ggplot(smarvus_age, aes(x = age, y = grade_numeric, fill = age)) +
@@ -362,7 +364,7 @@ anova(lm(grade_numeric ~ age, data = smarvus_age))
 # relationship between anxiety measures ----------------------------------------
 
 # 1. STARS Score 
-stars_totals <- smarvus_uk_filtered %>%
+stars_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q7.1_24)) %>%
   pivot_longer(
     cols = starts_with("Q7.1_"),
@@ -374,7 +376,7 @@ stars_totals <- smarvus_uk_filtered %>%
   )
 
 # 2. STARS-M Score 
-stars_m_totals <- smarvus_uk_filtered %>%
+stars_m_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q8.1_21)) %>%
   pivot_longer(
     cols = starts_with("Q8.1_"),
@@ -386,7 +388,7 @@ stars_m_totals <- smarvus_uk_filtered %>%
   )
 
 # 3. R-MARS Score 
-rmars_totals <- smarvus_uk_filtered %>%
+rmars_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q8.2_21, Q8.2_22, Q8.2_23, Q8.2_24)) %>%
   pivot_longer(
     cols = starts_with("Q8.2_"),
@@ -398,7 +400,7 @@ rmars_totals <- smarvus_uk_filtered %>%
   )
 
 # 4. R-MARS-S Score 
-rmars_s_totals <- smarvus_uk_filtered %>%
+rmars_s_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q7.2_20, Q7.2_21, Q7.2_22, Q7.2_23)) %>%
   pivot_longer(
     cols = starts_with("Q7.2_"),
@@ -410,7 +412,7 @@ rmars_s_totals <- smarvus_uk_filtered %>%
   )
 
 
-smarvus_all_scores <- smarvus_uk_filtered %>%
+smarvus_all_scores <- smarvus_uk_cleangrades %>%
   left_join(stars_totals, by = "unique_id") %>%
   left_join(stars_m_totals, by = "unique_id") %>%
   left_join(rmars_totals, by = "unique_id") %>%
