@@ -82,7 +82,7 @@ STARS_attainment
 ```
 This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around 70%, while for a STARS score of 115 it is around 62%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was -0.14, with a p-value below 0.05 (p=0.00007), and a 95% confidence interval of [-0.21, -0.07]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
 However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
-We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r grades_d`
+We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r grades_d`. We converted from correlation as our variables are continuous and not naturally split into two groups, therefore directly calculating cohen's d using group means was not appropriate.
 
 
 ### Relationships Between Other Variables
