@@ -54,15 +54,38 @@ We also noticed that the amount of missingness varied largely across degree year
 grade_na_bydegree
 ```
 
-We can aslo examine the distribution of the grades to see that the majority lie around 65%. 
+We can also examine the distribution of the grades to see that the majority lie around 65%. 
 
 ``` {r grades_histogram}
 grades_hist
 ```
 
-EDA for STARS below...
+### Statistics Anxiety
+To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. This typically contains 51 items, though here only the 3 anxiety subscales of the STARS were used, giving 23 items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115,with a higher score indicating greater statistics anxiety.
 
-Discussion of relationships between variables and maths anxiety..
+The distribution of STARS scores is shown below. The mean STARS score was calculated as 71.26, and the median was 71, with a standard deviation of 17.77. Observed scores ranged from 28 to 115.
+
+```{r} 
+STARS_hist
+```
+
+
+
+
+### Relationship Between Statistics Anxiety and Attainment
+To investigate the relationship between statistics anxiety and attainment, we looked at the association between participants' total STARS score and their grades in their statistics modules (in percentage).
+
+Below is a scatter plot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
+```{r}
+STARS_attainment
+```
+This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around 70%, while for a STARS score of 115 it is around 62%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was -0.14, with a p-value below 0.05 (p=0.00007), and a 95% confidence interval of [-0.21, -0.07]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
+However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
+We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r grades_d`
+
+
+### Relationships Between Other Variables
+
 
 Discussion of 
 

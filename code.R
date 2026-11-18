@@ -26,8 +26,16 @@ smarvus_raw %>%
     passed_check6 = sum(Q15.1_9 == 4, na.rm=TRUE)
   )
 
-# why have we only filtered out a couple of attention checks?
-smarvus_filtered <- smarvus_raw %>%
+# Q: why have we only filtered out a couple of attention checks? 
+# A: this was what George suggested we do as it was prompted in the Week 8 
+# workshop Rmd. He suggested we think about whether we filter out people who
+# failed any attention check, or all, or somewhere in between. I think the
+# argument for using these specific ones is it filters out people at specific
+# points, so Q7.1_24 occurs at the end of the STARS section, and Q8.1_21 occurs
+# at the end of the STARS-M section. The question is then do we want to exclude
+# people who stopped paying attention later, if they've got valid data for the
+# parts we care about? -Louisa
+smarvus_uk_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
@@ -70,8 +78,8 @@ smarvus_raw %>%
   arrange(desc(n))
 smarvus_filtered <- smarvus_filtered[smarvus_filtered$degree_major == "Psychology", ]
 
-# only want people who aren't studying any other maths related courses?
-# no, because "some other maths courses" includes statistics courses
+# Q: only want people who aren't studying any other maths related courses?
+# A: no, because "some other maths courses" includes statistics courses
 # smarvus_uk_filtered %>%
 #   count(degree_level_maths)
 # smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$degree_level_maths == "No", ]
@@ -311,6 +319,17 @@ stars_totals <- smarvus_uk_cleangrades %>%
     stars_score = sum(STARS)
   )
 
+# for write-up, check that stars_score doesn't include anyone with any NA 
+# answers as this could skew sum.
+# stars_totals %>%
+#  summarise(
+#    total = n(),
+#    complete = sum(!is.na(stars_score)),
+#    incomplete = sum(is.na(stars_score)),
+#    percent_missing = mean(is.na(stars_score)) * 100
+#  )
+# great, total = 795 and complete = 795.
+
 stars_totals
 
 smarvus_uk_scored <- smarvus_uk_cleangrades %>%
@@ -327,7 +346,7 @@ stars_summary <- smarvus_uk_scored %>%
 
 print(stars_summary)
 
-ggplot(smarvus_uk_scored, aes(x = stars_score)) +
+STARS_hist <- ggplot(smarvus_uk_scored, aes(x = stars_score)) +
   geom_histogram(aes(y = after_stat(density)), bins = 20, fill = "pink", color = "white", alpha = 0.7) +
   geom_density(color = "deeppink4", linewidth = 1) +
   labs(
@@ -341,7 +360,7 @@ ggplot(smarvus_uk_scored, aes(x = stars_score)) +
 
 # investigating relationship between maths/stats anxiety and grades ------------
 
-ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_numeric)) +
+STARS_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_numeric)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
   labs(
@@ -356,6 +375,12 @@ grades_cor_result <- cor.test(smarvus_uk_scored$stars_score, smarvus_uk_scored$g
 print(grades_cor_result)
 
 grades_d <- effectsize::r_to_d(grades_cor_result$estimate)
+
+# predicting statistics grades at extreme values of STARS score for write-up, 
+# we get 28 gives 70%, 115 gives 62%
+# grades_model <- lm(grade_numeric ~ stars_score, data = smarvus_uk_scored)
+# predicted_grades <- data.frame(stars_score = c(28, 115))
+# predict(grades_model, newdata = predicted_grades)
 
 
 # investigating relationship between historic attainment and current grade -----
