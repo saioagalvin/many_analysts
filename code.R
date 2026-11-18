@@ -35,7 +35,7 @@ smarvus_raw %>%
 # at the end of the STARS-M section. The question is then do we want to exclude
 # people who stopped paying attention later, if they've got valid data for the
 # parts we care about? -Louisa
-smarvus_uk_filtered <- smarvus_raw %>%
+smarvus_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
@@ -69,7 +69,7 @@ smarvus_raw %>%
 # only want students that have taken a statistics course (remove NA here?)
 smarvus_raw %>%
   count(eligibility_stats)
-smarvus_uk_filtered <- smarvus_filtered[smarvus_filtered$eligibility_stats == "Yes", ]
+smarvus_filtered <- smarvus_filtered[smarvus_filtered$eligibility_stats == "Yes", ]
 
 # only want psychology students
 smarvus_raw %>%
