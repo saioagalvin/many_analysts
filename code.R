@@ -10,25 +10,12 @@ smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE)
 
 # data processing --------------------------------------------------------------
 
-# filter to just UK
-smarvus_raw %>%
-  count(country)
-smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"),]
-
-UK <- c("England", "Scotland", "Northern Ireland")
-# seeing proportion of respondents that are at UK unis
-smarvus_raw %>%
-  mutate(origin = if_else(country %in% UK, "UK", country)) %>%
-  count(origin) %>%
-  mutate(prop = n / sum(n)) %>%
-  arrange(desc(n))
-
 # attention exclusions
-smarvus_uk %>%
+smarvus_raw %>%
   select(contains("amnesty"), contains("attention"), matches("Q7.1_24"), matches("Q8.1_21"),matches("Q9.1_22"),matches("Q11.1_9"),matches("Q13.1_17"),matches("Q15.1_9")) %>%
   map(table, useNA = "ifany")
 
-smarvus_uk %>%
+smarvus_raw %>%
   summarise(
     passed_amnesty = sum(attention_amnesty == "Yes", na.rm = TRUE),
     passed_check1  = sum(Q7.1_24 == 1, na.rm = TRUE),
@@ -48,15 +35,16 @@ smarvus_uk %>%
 # at the end of the STARS-M section. The question is then do we want to exclude
 # people who stopped paying attention later, if they've got valid data for the
 # parts we care about? -Louisa
-smarvus_uk_filtered <- smarvus_uk %>%
+smarvus_uk_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
     Q8.1_21 == 5
   )
 
-n_before <- nrow(smarvus_uk)
-n_after  <- nrow(smarvus_uk_filtered)
+n_before <- nrow(smarvus_raw)
+
+n_after  <- nrow(smarvus_filtered)
 
 n_before - n_after                 # rows removed
 (n_before - n_after) / n_before * 100   # percentage removed
@@ -64,33 +52,31 @@ n_after / n_before * 100                # percentage kept
 
 # integrity questions
 # You have just answered three reasoning problems. Did you look any of the answers up online?
-smarvus_uk %>%
+smarvus_raw %>%
   count(crt_check2)
-smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$crt_check2 == "No", ]
+smarvus_filtered <- smarvus_filtered[smarvus_filtered$crt_check2 == "No", ]
 
 # all postgrads are already excluded 
-smarvus_uk %>%
+smarvus_raw %>%
   count(eligibility_ug)
-smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$eligibility_ug == "Yes", ]
+smarvus_filtered <- smarvus_filtered[smarvus_filtered$eligibility_ug == "Yes", ]
 
 # exclude implausible ages
 # age is split into 3 categories 18-21/22-25/26+/NA so can't remove 99+
-smarvus_uk %>%
+smarvus_raw %>%
   count(age)
 
 # only want students that have taken a statistics course (remove NA here?)
-smarvus_uk %>%
+smarvus_raw %>%
   count(eligibility_stats)
-smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$eligibility_stats == "Yes", ]
+smarvus_uk_filtered <- smarvus_filtered[smarvus_filtered$eligibility_stats == "Yes", ]
 
 # only want psychology students
 smarvus_raw %>%
-  count(degree_major)
-smarvus_uk %>%
   count(degree_major) %>%
   mutate(prop = n / sum(n) * 100) %>%
   arrange(desc(n))
-smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$degree_major == "Psychology", ]
+smarvus_filtered <- smarvus_filtered[smarvus_filtered$degree_major == "Psychology", ]
 
 # Q: only want people who aren't studying any other maths related courses?
 # A: no, because "some other maths courses" includes statistics courses
@@ -99,19 +85,140 @@ smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$degree_major == "
 # smarvus_uk_filtered <- smarvus_uk_filtered[smarvus_uk_filtered$degree_level_maths == "No", ]
 
 # checking proportion of respondents that are in each year
-smarvus_uk %>%
+smarvus_raw %>%
   count(degree_year) %>%
   mutate(prop = n / sum(n) * 100)
 
 # grade columns ----------------------------------------------------------------
 
-# why is the majority of na grades in third year?
-# maybe worth removing 3rd year?
+# which all unis have submitted grade data?
+# make sure all missing data is written as NA
+# which of these unis has non-percentage grade data
+smarvus_grades <- smarvus_filtered %>%
+  mutate(
+    grade = trimws(grade),
+    grade = if_else(grade %in% c("", "NA", "Not Available"), NA_character_, grade),
+    is_numeric = str_detect(grade, "^\\d+(\\.\\d+)?\\s*%?$"),
+    is_letter  = str_detect(grade, "^[A-Fa-f][+-]?$")
+  ) %>%
+  group_by(university, country) %>%
+  summarise(
+    n = n(),
+    n_grade = sum(!is.na(grade)),
+    n_na_grade = sum(is.na(grade)),
+    percent_na_grade = sum(is.na(grade)) / n * 100,
+    has_grade_data = sum(!is.na(grade)) > 0,
+    percent_grade_numeric = sum(is_numeric, na.rm = TRUE) / n_grade * 100,
+    percent_grade_letter  = sum(is_letter,  na.rm = TRUE) / n_grade * 100
+  ) %>%
+  filter(has_grade_data) %>%
+  select(-has_grade_data) %>%
+  arrange(desc(n_grade))
+smarvus_grades
+
+smarvus_grades_long <- smarvus_grades %>%
+  pivot_longer(
+    cols = c(n_grade, n_na_grade),
+    names_to = "grade_status",
+    values_to = "count"
+  ) %>%
+  mutate(grade_status = recode(grade_status,
+                               n_grade = "Grade present",
+                               n_na_grade = "Grade missing"))
+  
+smarvus_grades_plot <- ggplot(smarvus_grades_long,
+                              aes(
+                                x = fct_reorder(university, 
+                                           count * (grade_status == "Grade present"),
+                                           .fun = sum, 
+                                           .desc = TRUE),
+                                y = count, 
+                                fill = grade_status)
+                              ) +
+  geom_col() +
+  labs(
+    title = "Grade missingness in SMARVUS by University",
+    subtitle = "Psychology subset of all universities surveyed with grade data provided",
+    x = "University", 
+    y = "Number of observations", 
+    fill = NULL
+  ) +
+  theme_minimal() +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+smarvus_grades_plot
+
+# UK grades --------------------------------------------------------------------
+
+# filter to just UK
+smarvus_filtered %>%
+  count(country)
+smarvus_uk <- smarvus_filtered[smarvus_filtered$country %in% c("England", "Scotland", "Northern Ireland"),]
+
+UK <- c("England", "Scotland", "Northern Ireland")
+# seeing proportion of respondents that are at UK unis
+smarvus_filtered %>%
+  mutate(origin = if_else(country %in% UK, "UK", country)) %>%
+  count(origin) %>%
+  mutate(prop = n / sum(n)) %>%
+  arrange(desc(n))
 
 # checking grade data for incorrect inputs (expecting all percentages)
-smarvus_uk_clean <- smarvus_uk_filtered %>%
+smarvus_uk_clean <- smarvus_uk %>%
   mutate(grade_numeric = parse_number(grade, na = c("", "NA", "Not Available")))
 
+# which UK universities have submitted grade data?
+smarvus_uk_clean %>%
+  count(university)
+
+uk_university_nas <- smarvus_uk_clean %>%
+  group_by(university) %>%
+  summarise(
+    n = n(),
+    n_na = sum(is.na(grade_numeric)),
+    percent_na = sum(!is.na(grade_numeric)) / n() * 100,
+    n_not_na = sum(!is.na(grade_numeric))
+  ) %>%
+  arrange(desc(n_not_na))
+uk_university_nas
+
+# total number of grade data if we took from full dataset
+sum(smarvus_grades$n_grade)
+# total number of grade data if we took from UK dataset
+sum(uk_university_nas$n_not_na)
+
+uk_nas_long <- uk_university_nas %>%
+  pivot_longer(
+    cols = c(n_not_na, n_na),
+    names_to = "grade_status",
+    values_to = "count"
+  ) %>%
+  mutate(grade_status = recode(grade_status,
+                               n_not_na = "Grade present",
+                               n_na = "Grade missing"))
+
+grade_na_byuni <- ggplot(uk_nas_long,
+                         aes(
+                           x = fct_reorder(university, 
+                                           count * (grade_status == "Grade present"),
+                                           .fun = sum, 
+                                           .desc = TRUE),
+                           y = count, 
+                           fill = grade_status)
+) +
+  geom_col() +
+  labs(
+    title = "Grade missingness in SMARVUS by UK University",
+    subtitle = "UK universities Psychology subset",
+    x = "University", 
+    y = "Number of observations", 
+    fill = NULL
+  ) +
+  theme_minimal() +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+
+grade_na_byuni
+
+# check for incorrect inputs
 smarvus_uk_clean %>%
   count(grade_high)
 
