@@ -63,7 +63,7 @@ grades_hist
 ### Statistics Anxiety
 To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. This typically contains 51 items, though here only the 3 anxiety subscales of the STARS were used, giving 23 items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115,with a higher score indicating greater statistics anxiety.
 
-The distribution of STARS scores is shown below. The mean STARS score was calculated as 71.26, and the median was 71, with a standard deviation of 17.77. Observed scores ranged from 28 to 115.
+The distribution of STARS scores is shown below. The mean STARS score was calculated as 71.26, and the median was 71, with a standard deviation of 17.77. Observed scores ranged from 28 to 115. 
 
 ```{r} 
 STARS_hist
