@@ -2,14 +2,15 @@
 title: "Many Analysts"
 authors: "Anonymous or not?"
 date: ""
+bibliography: references.bib
 fontsize: 12pt
 output:
+  html_document:
+    df_print: paged
   pdf_document:
     number_sections: true
     fig_caption: true
     latex_engine: xelatex
-  html_document:
-    df_print: paged
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{float}
@@ -89,13 +90,4 @@ We additionally converted the correlation coefficient into our Cohen's d effect 
 
 Discussion of 
 
-```{references, include=FALSE}
-@article{SMARVUS_paper,
-  title={Data from an international multi-centre study of statistics and mathematics anxieties and related variables in university students (the SMARVUS dataset)},
-  author={Terry, J. and Tip, L. and Lea, C. and Flack, Z.M. and Brolly, M.},
-  journal={Journal of Open Psychology Data},
-  year={2023}
-}
 
-
-```
