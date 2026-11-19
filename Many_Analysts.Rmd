@@ -87,7 +87,30 @@ We additionally converted the correlation coefficient into our Cohen's d effect 
 
 ### Relationships Between Other Variables
 
+#### Prior Maths Education: GCSE vs A Level
+The violin plot below compares statistics module grades for students whose highest prior maths qualification was GCSE or A Level. The red diamond indicates the mean grade.
 
-Discussion of 
+
+```{r}
+math_edu_violin
+```
+The ANCOVA compares the two maths education groups while controlling for total STARS
+score.
+
+```{r}
+math_ancova_table
+```
+#### 1.3.3.2 Gender: Women vs Men 
+The violin plot below compares statistics module grades for women and men. The red diamond indicates the mean grade.
+
+```{r}
+gender_violin
+```
+The ANCOVA compares women and men while controlling for total STARS score.
+
+```{r}
+gender_ancova_table
+```
+
 
 ### References

@@ -385,77 +385,163 @@ grades_d <- effectsize::r_to_d(grades_cor_result$estimate)
 
 # investigating relationship between historic attainment and current grade -----
 
-smarvus_uk_cleangrades %>%
+# GCSE vs A Level maths education
+smarvus_uk_scored %>%
+  filter(math_edu_level %in% c("GCSE", "A Level")) %>%
   count(math_edu_level, sort = TRUE)
 
-smarvus_uk_cleangrades %>%
+smarvus_uk_scored %>%
+  filter(math_edu_level %in% c("GCSE", "A Level")) %>%
   group_by(math_edu_level) %>%
   summarise(
-    n            = n(),
+    n = n(),
     n_with_grade = sum(!is.na(grade_numeric)),
-    mean_grade   = mean(grade_numeric, na.rm = TRUE),
-    sd_grade     = sd(grade_numeric, na.rm = TRUE)
+    mean_grade = mean(grade_numeric, na.rm = TRUE),
+    sd_grade = sd(grade_numeric, na.rm = TRUE)
   )
 
-gcse_alevel <- smarvus_uk_cleangrades %>%
+# Keep only GCSE and A Level students
+gcse_alevel <- smarvus_uk_scored %>%
   filter(math_edu_level %in% c("GCSE", "A Level")) %>%
-  mutate(math_edu_level = factor(math_edu_level, levels = c("GCSE", "A Level")))
+  mutate(
+    math_edu_level = factor(
+      math_edu_level,
+      levels = c("GCSE", "A Level")
+    )
+  )
 
-ggplot(gcse_alevel, aes(x = math_edu_level, y = grade_numeric, fill = math_edu_level)) +
-  geom_boxplot(alpha = 0.5, width = 0.4, outlier.shape = NA) +
+# Violin plot of statistics grades by prior maths education
+math_edu_violin <- ggplot(
+  gcse_alevel,
+  aes(x = math_edu_level, y = grade_numeric, fill = math_edu_level)
+) +
+  geom_violin(alpha = 0.5, trim = FALSE) +
   geom_jitter(width = 0.12, alpha = 0.5, color = "steelblue") +
-  stat_summary(fun = mean, geom = "point", shape = 18, size = 4, color = "firebrick") +
+  stat_summary(
+    fun = mean, geom = "point", shape = 18,
+    size = 4, color = "firebrick"
+  ) +
   labs(
     title = "Statistics Module Grades by Prior Maths Education",
-    subtitle = "Red blob is mean",
+    subtitle = "Red diamond represents the mean",
     x = "Highest High-School Maths Qualification",
     y = "Statistics Module Grade (%)"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
 
-library(effectsize)
+math_edu_violin
 
-d_math_edu <- cohens_d(grade_numeric ~ math_edu_level, data = gcse_alevel)
+# Cohen's d for the unadjusted GCSE vs A Level comparison
+d_math_edu <- effectsize::cohens_d(
+  grade_numeric ~ math_edu_level,
+  data = gcse_alevel
+)
 print(d_math_edu)
+
+# ANCOVA: compare GCSE and A Level while controlling for STARS score
+math_ancova_data <- gcse_alevel %>%
+  drop_na(grade_numeric, stars_score)
+
+math_ancova <- lm(
+  grade_numeric ~ math_edu_level + stars_score,
+  data = math_ancova_data
+)
+
+math_ancova_table <- car::Anova(math_ancova, type = 2)
+math_ancova_summary <- summary(math_ancova)
+math_ancova_eta <- effectsize::eta_squared(
+  math_ancova_table,
+  partial = TRUE
+)
+
+math_ancova_table
+math_ancova_summary
+math_ancova_eta
+
+# Check homogeneity of regression slopes
+math_interaction <- lm(
+  grade_numeric ~ math_edu_level * stars_score,
+  data = math_ancova_data
+)
+math_interaction_table <- car::Anova(math_interaction, type = 2)
+math_interaction_table
 
 
 # investigating relationship between gender and current grade ------------------
 
-smarvus_uk_cleangrades %>%
-  count(gender, sort = TRUE)
-
-smarvus_uk_cleangrades %>%
-  group_by(gender) %>%
-  summarise(
-    n            = n(),
-    n_with_grade = sum(!is.na(grade_numeric)),
-    mean_grade   = mean(grade_numeric, na.rm = TRUE),
-    sd_grade     = sd(grade_numeric, na.rm = TRUE)
+# Compare women and men only
+smarvus_gender <- smarvus_uk_scored %>%
+  filter(gender %in% c("Female/Woman", "Male/Man")) %>%
+  mutate(
+    gender = factor(
+      gender,
+      levels = c("Female/Woman", "Male/Man"),
+      labels = c("Women", "Men")
+    )
   )
 
-# making gender into a factor
-smarvus_gender <- smarvus_uk_cleangrades %>%
-  mutate(gender = factor(gender, levels = c("Female/Woman", "Male/Man", "Another Gender")))
+smarvus_gender %>%
+  count(gender, sort = TRUE)
 
-ggplot(smarvus_gender, aes(x = gender, y = grade_numeric, fill = gender)) +
-  geom_boxplot(alpha = 0.5, width = 0.4, outlier.shape = NA) +
+smarvus_gender %>%
+  group_by(gender) %>%
+  summarise(
+    n = n(),
+    n_with_grade = sum(!is.na(grade_numeric)),
+    mean_grade = mean(grade_numeric, na.rm = TRUE),
+    sd_grade = sd(grade_numeric, na.rm = TRUE)
+  )
+
+# Violin plot of statistics grades by gender
+gender_violin <- ggplot(
+  smarvus_gender,
+  aes(x = gender, y = grade_numeric, fill = gender)
+) +
+  geom_violin(alpha = 0.5, trim = FALSE) +
   geom_jitter(width = 0.12, alpha = 0.5, color = "steelblue") +
-  stat_summary(fun = mean, geom = "point", shape = 18, size = 4, color = "firebrick") +
+  stat_summary(
+    fun = mean, geom = "point", shape = 18,
+    size = 4, color = "firebrick"
+  ) +
   labs(
     title = "Statistics Module Grades by Gender",
-    subtitle = "Red blob is mean",
+    subtitle = "Red diamond represents the mean",
     x = "Gender",
     y = "Statistics Module Grade (%)"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
 
+gender_violin
 
-# cohen's d only works with 2 groups, so use anova
-# d_gender <- cohens_d(grade_numeric ~ gender, data = smarvus_gender)
-# print(d_gender)
-anova(lm(grade_numeric ~ gender, data = smarvus_gender))
+# ANCOVA: compare women and men while controlling for STARS score
+gender_ancova_data <- smarvus_gender %>%
+  drop_na(grade_numeric, stars_score)
+
+gender_ancova <- lm(
+  grade_numeric ~ gender + stars_score,
+  data = gender_ancova_data
+)
+
+gender_ancova_table <- car::Anova(gender_ancova, type = 2)
+gender_ancova_summary <- summary(gender_ancova)
+gender_ancova_eta <- effectsize::eta_squared(
+  gender_ancova_table,
+  partial = TRUE
+)
+
+gender_ancova_table
+gender_ancova_summary
+gender_ancova_eta
+
+# Check homogeneity of regression slopes
+gender_interaction <- lm(
+  grade_numeric ~ gender * stars_score,
+  data = gender_ancova_data
+)
+gender_interaction_table <- car::Anova(gender_interaction, type = 2)
+gender_interaction_table
 
 # investigating relationship between age and current grade ---------------------
 
