@@ -41,7 +41,7 @@ d = `r grades_d`, 95% CI [`r grades_cor_result$conf.int`], based on N = `r N`.
 
 
 ## Details of the Analysis
-The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) @SMARVUS_paper. This dataset contains survey responses from N = 12,570 students from 100 universities in 35 countries, collected in 21 languages. They attempted to measure anxieties (statistics, mathematics, test, trait, social interaction, performance, creativity, intolerance of uncertainty, and fear of negative evaluation), self-efficacy, persistence, and the cognitive reflection test, and collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
+The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) @SMARVUS_paper. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
 
 We chose to only include UK universities in our analysis because it is the country with the most observations, at 2962, making up around 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between subjects that could affect grades or maths anxiety.
  
@@ -112,5 +112,20 @@ The ANCOVA compares women and men while controlling for total STARS score.
 gender_ancova_table
 ```
 
-
+### Different anxiety measures
+The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). They also tried using the statistics questions' phrasing with maths replacing statistics (stars_m_score) and vice versa (rmars_s_score). The correlations for different questions measuring statistics and different questions measuring maths are very high showing the phrasing of the questions is unlikely to be biasing the results. However, there is also a strong correlation between statistics and maths anxiety- which means we can't test for the effect of statistics anxiety with the maths anxiety accounted for. 
+```{r}
+ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
+                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
+  geom_text(aes(label = round(Freq, 2)), color = "black", size = 4.5) +
+  theme_minimal() +
+  labs(
+    title = "Correlation Heatmap of Anxiety Measures",
+    x = "", 
+    y = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 ### References
