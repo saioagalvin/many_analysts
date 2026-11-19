@@ -41,6 +41,7 @@ d = `r grades_d`, 95% CI [`r grades_cor_result$conf.int`], based on N = `r N`.
 
 
 ## Details of the Analysis
+
 The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) @SMARVUS_paper. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
 
 We chose to only include UK universities in our analysis because it is the country with the most observations, at 2962, making up around 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between subjects that could affect grades or maths anxiety.
@@ -49,17 +50,21 @@ Six "attention checks" were built in to the survey, which we used to filter out 
 
 Additionally, we filtered our data to only include Psychology undergraduate students, as they made up the majority of degree majors at the UK universities surveyed (93.0%), and this would also improve the strength of our comparisons between students, as different course demands and difficulty levels would also affect anxiety levels.
 
-We also noticed that the amount of missingness varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations in 3rd and 4th year were almost completely missing.
+Only 20 universities in the SMARVUS data provided grade information for the statistics course responders were taking at the time of the survey, and of these, 8 are UK universities. We chose to only use university-reported grades instead of student-reported grades, for reliability. To investigate the effect of statistics anxiety on attainment, we remove all missingness from the UK grades data, leading to 795 grade observations.
 
 ``` {r na_grades_by_degree}
-grade_na_bydegree
+grade_na_byuni
 ```
+
+We also noticed that the amount of missingness varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations in 3rd and 4th year were almost completely missing.
 
 We can also examine the distribution of the grades to see that the majority lie around 65%. 
 
 ``` {r grades_histogram}
 grades_hist
 ```
+
+
 
 ### Statistics Anxiety
 To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. This typically contains 51 items, though here only the 3 anxiety subscales of the STARS were used, giving 23 items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115,with a higher score indicating greater statistics anxiety.
