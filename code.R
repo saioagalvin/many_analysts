@@ -56,6 +56,17 @@ smarvus_raw %>%
   count(crt_check2)
 smarvus_filtered <- smarvus_filtered[smarvus_filtered$crt_check2 == "No", ]
 
+# progress
+progress_hist <- ggplot(smarvus_filtered) +
+  geom_histogram(
+    aes(x = progress,
+        y = after_stat(density)),
+    bins = 50,
+    position = "identity"
+  ) +
+  theme_minimal()
+progress_hist
+
 # all postgrads are already excluded 
 smarvus_raw %>%
   count(eligibility_ug)
@@ -304,6 +315,35 @@ grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   theme_minimal()
 
 grades_hist
+
+
+# age eda ----------------------------------------------------------------------
+
+unique(smarvus_uk_cleangrades$degree_year)
+
+grade_density_year <- ggplot(
+  filter(smarvus_uk_cleangrades, !is.na(degree_year), !is.na(grade_numeric)),
+  aes(x = grade_numeric, fill = degree_year, color = degree_year)
+) +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    bins = 20,
+    alpha = 0.4,
+    position = "identity",
+    color = "white"
+  ) +
+  geom_density(alpha = 0, linewidth = 1) +
+  labs(
+    title = "Distribution of Statistics Module Grades by Degree Year",
+    subtitle = "UK universities Psychology subset",
+    x = "Grade (%)",
+    y = "Density",
+    fill = "Degree year",
+    color = "Degree year"
+  ) +
+  theme_minimal()
+
+grade_density_year
 
 
 # maths/stats anxiety columns --------------------------------------------------
