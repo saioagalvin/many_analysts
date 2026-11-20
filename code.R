@@ -661,3 +661,13 @@ ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+# investigating correlation of r-mars-s with attainment
+grades_rmarss_cor_result <- cor.test(smarvus_all_scores$rmars_s_score, smarvus_all_scores$grade_numeric)
+
+print(grades_rmarss_cor_result)
+
+grades_rmarss_d <- effectsize::r_to_d(grades_rmarss_cor_result$estimate)
+print(grades_rmarss_d)
+
+grades_rmarss_CI <- effectsize::r_to_d(r= grades_rmarss_cor_result$conf.int[1:2])
+print(grades_rmarss_CI)
