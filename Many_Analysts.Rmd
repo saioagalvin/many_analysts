@@ -109,6 +109,48 @@ The ANCOVA compares women and men while controlling for total STARS score.
 gender_ancova_table
 ```
 
+### Exploratory Multiple Linear Regression
+To investigate whether the supposed negative association between statistics anxiety and attainment persisted after accounting for other variables, we fitted a multiple linear regression model. Since we are investigating the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics.
+
+The analysis was restricted to participants identifying as either Female/Woman or Male/Man as in the violin plots and  any observations with missing values for any of the model variables were excluded, leaving 783 observations.
+
+We used backward elimination to obtain a more parsimonious model. Starting with the full model, we used partial F-tests to assess each explanatory variable. At each step, the variable with the largest p-value was considered for removal, provided it was not STARS score since it was the main variable of interest.
+
+```{r}
+reg_dat <- smarvus_uk_scored %>%
+  filter(gender %in% c("Female/Woman", "Male/Man")) %>%
+  mutate(gender = factor(gender, levels = c("Female/Woman", "Male/Man"))) %>%
+  drop_na(grade_numeric, stars_score, university, gender, degree_year, math_edu_level)
+
+# Full model
+lm_full <- lm(grade_numeric ~ stars_score+factor(university)+factor(gender)+
+                factor(degree_year)+factor(math_edu_level),data = reg_dat
+)
+
+# Partial F-test for backwards elimination
+drop1(lm_full, test = "F")
+```
+Based on the partial F-test, we first removed prior mathematics eduction since it had the largest p-value, $0.102>0.05$. We then refitted the model without this term and did another partial F-test to examine the remaining terms.
+```{r}
+lm2 <- lm(grade_numeric ~ stars_score + factor(university)+factor(gender)+factor(degree_year),
+            data = reg_dat)
+
+drop1(lm2, test = "F")
+```
+Since none of the terms have a p-value greater than $0.05$, we remove no further terms from this model.
+```{r}
+summary(lm2)
+
+# 95% CI for STARS score
+confint(lm2)["stars_score", ]
+```
+In this final model, STARS score was negatively associated with attainment ($\beta = -0.83, p=0.0002<0.05$). This implies that, holding the other variables constant, a 10 point increase in a students STARS score was associated with a 0.83 percentage-point decrease in statistics module grade. Furthermore, the model has an adjusted R^2 of $0.122$, indicating that approximately $12.2%$ of the variation in grades was explained by our included predictors, after accounting for model complexity. This is somewhat unsurprising, as the available data provided only limited information about students previous academic attainment. In particular, prior mathematics grades were recorded inconsistently across different qualification systems, making it difficult to incorporate them reliably into the model. Consequently, potentially important sources of variation in university grades may not have been captured.
+
+We also examined residual diagnostic plots to assess the assumptions of the linear regression model. These indicated slight heteroscedasticity and deviations from normality in the tails of the Q-Q plot. However, these departures were not considered sufficiently severe to invalidate the analysis. 
+
+This suggests that the negative association between statistics anxiety and attainment observed in the Pearson correlation analysis persists after adjusting for other student characteristics. However, this still cannot establish causation.
+
+
 ### Alternate Anxiety Measures
 The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
 We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to isolate the effect of statistics anxiety on attainment while accounting for maths anxiety.
@@ -127,3 +169,5 @@ ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 ### References
+
+
