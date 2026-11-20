@@ -31,7 +31,7 @@ source('code.R')
 # What effect does statistics anxiety have on attainment?
 ## Effect Size Summary
 
-d = `r grades_d`, 95% CI [`r grades_cor_result$conf.int`], based on N = `r N`.
+d = `r grades_d`, 95% CI [`r effectsize::r_to_d(grades_cor_result$conf.int[1])`, `r effectsize::r_to_d(grades_cor_result$conf.int[2])`], based on N = `r N`.
 
 
 ## Summary of Analysis Approach (max 100 words)
