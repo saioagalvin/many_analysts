@@ -62,14 +62,8 @@ We can also examine the distribution of the grades to see that the majority lie 
 ``` {r grades_histogram}
 grades_hist
 ```
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 82aaf5f460fa3373685defddbf396b9d9c9cfb4e
 ### Statistics Anxiety
-To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. This typically contains 51 items, though here only the 3 anxiety subscales of the STARS were used, giving 23 items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115,with a higher score indicating greater statistics anxiety.
+To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. This typically contains 51 items, though here only the 3 anxiety subscales of the STARS were used, giving 23 items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115, with a higher score indicating greater statistics anxiety.
 
 The distribution of STARS scores is shown below. The mean STARS score was calculated as 71.26, and the median was 71, with a standard deviation of 17.77. Observed scores ranged from 28 to 115. A check was carried out to ensure that part answers to the STARS section (i.e. anyone who had answered some of the STARS questions but not all) were not included so as not to skew the sum, but no partial answers were found, so all responses were included.
 
@@ -79,13 +73,13 @@ STARS_hist
 ### Relationship Between Statistics Anxiety and Attainment
 To investigate the relationship between statistics anxiety and attainment, we looked at the association between participants' total STARS score and their grades in their statistics modules (in percentage).
 
-Below is a scatter plot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
+Below is a scatterplot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
 ```{r}
 STARS_attainment
 ```
 This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around 70%, while for a STARS score of 115 it is around 62%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was -0.14, with a p-value below 0.05 (p=0.00007), and a 95% confidence interval of [-0.21, -0.07]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
 However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
-We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r grades_d`. We converted from correlation as our variables are continuous and not naturally split into two groups, therefore directly calculating cohen's d using group means was not appropriate. We considered splitting our data manually into two groups ("high" and "low" anxiety) but decided against it as the splitting would be arbitrary, and we were concerned about loss of information.
+We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r grades_d`. As our variables are continuous, calculating Cohen's d directly from group means was not appropriate. We considered splitting participants manually into two groups ("high" and "low" anxiety), but decided against this as the splitting would be arbitrary and would result in loss of information.
 
 
 ### Relationships Between Other Variables
@@ -115,8 +109,9 @@ The ANCOVA compares women and men while controlling for total STARS score.
 gender_ancova_table
 ```
 
-### Different anxiety measures
-The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). They also tried using the statistics questions' phrasing with maths replacing statistics (stars_m_score) and vice versa (rmars_s_score). The correlations for different questions measuring statistics and different questions measuring maths are very high showing the phrasing of the questions is unlikely to be biasing the results. However, there is also a strong correlation between statistics and maths anxiety- which means we can't test for the effect of statistics anxiety with the maths anxiety accounted for. 
+### Alternate Anxiety Measures
+The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
+We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to isolate the effect of statistics anxiety on attainment while accounting for maths anxiety.
 ```{r}
 ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   geom_tile(color = "white") +
