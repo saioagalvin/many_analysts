@@ -12,7 +12,16 @@ smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE)
 
 # attention exclusions
 smarvus_raw %>%
-  select(contains("amnesty"), contains("attention"), matches("Q7.1_24"), matches("Q8.1_21"),matches("Q9.1_22"),matches("Q11.1_9"),matches("Q13.1_17"),matches("Q15.1_9")) %>%
+  select(
+    contains("amnesty"), 
+    contains("attention"), 
+    matches("Q7.1_24"), 
+    matches("Q8.1_21"),
+    matches("Q9.1_22"),
+    matches("Q11.1_9"),
+    matches("Q13.1_17"),
+    matches("Q15.1_9")
+    ) %>%
   map(table, useNA = "ifany")
 
 smarvus_raw %>%
@@ -186,10 +195,8 @@ uk_university_nas <- smarvus_uk_clean %>%
   summarise(
     n = n(),
     n_na = sum(is.na(grade_numeric)),
-    percent_na = sum(!is.na(grade_numeric)) / n() * 100,
     n_not_na = sum(!is.na(grade_numeric))
-  ) %>%
-  arrange(desc(n_not_na))
+  )
 uk_university_nas
 
 # total number of grade data if we took from full dataset
