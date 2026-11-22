@@ -5,12 +5,12 @@ date: ""
 bibliography: references.bib
 fontsize: 12pt
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     number_sections: true
     fig_caption: true
     latex_engine: xelatex
+  html_document:
+    df_print: paged
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{float}
@@ -42,7 +42,7 @@ d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_resul
 
 ## Summary of Analysis Approach
 
-We analysed data from UK Psychology undergraduate students who had university-reported statistics module grades and passed all attention check questions. Statistics anxiety was measured using the sum of responses to the 23 included STARS questions. Our main analysis was of the relationship between total STARS score and statistics module grade (in %), explored using Pearson's correlation coefficient and converted to Cohen's d. Additional explorations included the correlation between maths and statistics anxiety, and a linear regression attempting to control for university, gender, and degree year. These final analyses were exploratory and do not aim to establish causation.
+We analysed data from UK Psychology undergraduate students who had university-reported statistics module grades and passed all attention check questions. Statistics anxiety was measured using the sum of responses to the 23 included questions on this topic (referred to as STARS). Our main analysis was of the relationship between total STARS score and statistics module grade (in %), explored using Pearson's correlation coefficient and converted to Cohen's d. Additional explorations included the correlation between maths and statistics anxiety, and a linear regression attempting to control for university, gender, and degree year. These final analyses were exploratory and do not aim to establish causation.
 
 
 ## Details of the Analysis
@@ -159,7 +159,7 @@ The degree of missingness also varied largely across degree years, with the majo
 
 We also examined the distribution of the grades, to see that the majority lie around 65%.
 
-```{r grades_hist}
+```{r grades_hist, fig.width=5, fig.height=3}
 # removing all observations that are missing grade data
 # assuming missing at random
 smarvus_uk_cleangrades <- smarvus_uk_clean[!is.na(smarvus_uk_clean$grade_numeric), ]
@@ -190,7 +190,7 @@ To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool 
 
 The distribution of STARS scores is shown below. The mean STARS score was `r round(mean(smarvus_uk_scored$stars_score, na.rm = TRUE), 2)`, and the median was `r median(smarvus_uk_scored$stars_score, na.rm = TRUE)`, with a standard deviation of `r round(sd(smarvus_uk_scored$stars_score, na.rm = TRUE), 2)`. Observed scores ranged from 28 to 115. A check was carried out to ensure that partial answers to the STARS section (i.e. anyone who had answered some of the STARS questions but not all) were not included so as not to skew the sum, but no partial answers were found, so all responses were included.
 
-```{r stars_hist}
+```{r stars_hist, fig.width=5, fig.height=3}
 # find stars score for each observation
 stars_totals <- smarvus_uk_cleangrades %>%
   subset(select = -c(Q7.1_24)) %>%
@@ -231,7 +231,7 @@ stars_hist
 To investigate the relationship between statistics anxiety and attainment, we looked at the association between participants' total STARS score and their grades in their statistics modules (in percentage).
 
 Below is a scatterplot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
-```{r}
+```{r, fig.width=5, fig.height=3}
 stars_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_numeric)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
@@ -248,7 +248,7 @@ stars_attainment
 
 This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around  `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 28)))`%, while for a STARS score of 115 it is around `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 115)))`%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was `r round(grades_cor_result$estimate, 2)`, with $p<0.001$ , and a 95% confidence interval of [`r round(grades_cor_result$conf.int[1], 2)`, `r round(grades_cor_result$conf.int[2], 2)`]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
 However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
-We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r round(grades_d, 2)`. As our variables are continuous, calculating Cohen's d directly from group means was not appropriate. We considered splitting participants manually into two groups ("high" and "low" anxiety), but decided against this as the splitting would be arbitrary and would result in loss of information.
+We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r round(grades_d, 2)`. As our variables are continuous, calculating Cohen's d directly from group means was approximate. We considered splitting participants manually into two groups ("high" and "low" anxiety), but decided against this as the splitting would be arbitrary and would result in loss of information.
 
 
 ### Relationships Between Other Variables
@@ -297,17 +297,17 @@ stars_grid <- wrap_plots(plots, ncol = 2) +
 stars_grid
 ```
 
-The university data is noisy, and some universities have much more observations than others (for example University of Sussex), so it is difficult to make strong conclusions from the scatterplot. However, we observed that there is a difference between grades at the same STARS scores, and the general trend of grade vs STARS score differs between universities.
+The university level data is noisy, and some universities have many more observations than others (for example University of Sussex), so it is difficult to make strong conclusions from the scatterplot. However, we observed that there is a difference between grades at the same STARS scores, and the general trend of grade vs STARS score differs between universities.
 
-The grade vs STARS score slope also differed between men and women, with women's grades decreasing at a faster rate as statistics anxiety levels increase compared to men. This could be explained by difference in approaches to anxiety and assessment between men and women.
+The grade vs STARS score slope also differed between men and women, with women's grades decreasing at a faster rate as statistics anxiety levels increase compared to men. This could be explained by difference in approaches to anxiety and assessment between men and women but further investigations would be required to explore this.
 
-Noting that this data had much more data for First and Second year students in comparison to Third years, we observed that Second years' grades decrease more as statistics anxiety increases, which could be explained by an increase in difficulty between first and second year.
+Noting that there is more data for first and second year students in comparison to third year students, we observed that second year students' grades decrease more as statistics anxiety increases, which could possibly be explained by an increase in difficulty between first and second year.
 
 Finally, attainment vs STARS score varies by the highest level of maths education prior to university, with students who took A-Level Maths having higher grades for each STARS score in comparison to students who only took GCSE Maths.
 
 Therefore we have evidence to include these covariates in our multiple regression model. It is also important to analyse any correlation between covariates, as linear models assume that covariates are independent and identically distributed. The following correlation heatmap uses Cramer's V score to find the correlation between the categorical factors. 
 
-```{r reg_pairplot}
+```{r reg_pairplot, fig.width=5, fig.height=3}
 
 cat_vars <- c("gender", "degree_year", "math_edu_level", "university")
 
@@ -333,7 +333,7 @@ cv_plot <- ggplot(cv_long, aes(v1, v2, fill = cramer_v)) +
 cv_plot
 ```
 
-From this plot, we saw that the highest correlation is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However the correlation wasn't very large, so we didn't control for correlation between covariates when creating a model. 
+From this plot, we saw that the highest correlation is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However the correlation isn't very large, so we didn't control for correlation between covariates when creating a model. 
 
 ##### Model fitting
 
@@ -383,7 +383,7 @@ The dataset had questions used to measure statistics anxiety (stars_score) and q
 
 We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to isolate the effect of statistics anxiety on attainment while accounting for maths anxiety.
 
-```{r}
+```{r, fig.width=5, fig.height=3}
 
 # STARS Score 
 stars_totals <- smarvus_uk_cleangrades %>%
