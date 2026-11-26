@@ -249,6 +249,16 @@ smarvus_uk_clean %>%
 ggplot(smarvus_uk_clean, aes(x=grade_numeric)) + 
   geom_histogram(bins=100)
 
+# grade distribution has very large spike at around 65? examine grade distribution by uni
+# to look for outliers
+# ggplot(smarvus_uk_clean, aes(x = university, y = grade_numeric)) +
+#  geom_boxplot() +
+#  labs(title = "Statistics Module Grades by University",
+#    x = "University",
+#    y = "Statistics Module Grade (%)") +
+#  theme_minimal() +
+#  theme(axis.text.x = element_text(angle = 45), hjust = 1)
+
 # find percentage of na grade in each degree year
 degree_nas <- smarvus_uk_clean %>%
   group_by(degree_year) %>%
@@ -299,9 +309,30 @@ grade_summary <- smarvus_uk_clean %>%
 
 print(grade_summary)
 
+#here remove all na grades then check distribution of grades by uni
+smarvus_uk_gradecheck <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric), 
+]
+
+ggplot(smarvus_uk_gradecheck, aes(x = university, y = grade_numeric)) +
+    geom_boxplot() +
+    labs(title = "Statistics Module Grades by University",
+      x = "University",
+      y = "Statistics Module Grade (%)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90))
+
+# now investigate southhampton specifically as looks very congregated
+
 # after making all missing into NA, missingness seems fairly uniform across years
-# so maybe just need to remove all rows with missing grades
-smarvus_uk_cleangrades <- smarvus_uk_clean[!is.na(smarvus_uk_clean$grade_numeric), ]
+# so maybe just need to remove all rows with missing grades, and additionally here 
+# remove 0 grades and uni of southampton due to suspicious distribution of grades
+
+smarvus_uk_cleangrades <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric) & 
+    smarvus_uk_clean$grade_numeric != 0 &
+    smarvus_uk_clean$university != "University of Southampton",
+  ]
 N <- nrow(smarvus_uk_cleangrades)
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
