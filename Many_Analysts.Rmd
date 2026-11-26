@@ -25,6 +25,7 @@ knitr::opts_chunk$set(
   message   = FALSE, 
   warning   = FALSE
 )
+
 library(tidyverse)
 library(patchwork)
 library(rstatix)
@@ -247,15 +248,19 @@ stars_attainment
 ```
 
 This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around  `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 28)))`%, while for a STARS score of 115 it is around `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 115)))`%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was `r round(grades_cor_result$estimate, 2)`, with $p<0.001$ , and a 95% confidence interval of [`r round(grades_cor_result$conf.int[1], 2)`, `r round(grades_cor_result$conf.int[2], 2)`]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
+
 However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
 We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r round(grades_d, 2)`. As our variables are continuous, calculating Cohen's d directly from group means was not appropriate. We considered splitting participants manually into two groups ("high" and "low" anxiety), but decided against this as the splitting would be arbitrary and would result in loss of information.
+
+The scatterplot shows no obvious outliers or curvature, so the relationship between STARS score and grade appears to be approximately linear. Both histograms are also roughly symmetric and unimodal, so neither variable is strongly skewed.  We therefore considered Pearson's correlation more appropriate than Spearman's. Furthermore, the conversion from a correlation to Cohen's $d$, $d = \frac{2r}{\sqrt{1-r^2}}$, is defined for Pearson's $r$, so using Spearman would only give a rough approximation. 
 
 
 ### Relationships Between Other Variables
 
 #### Exploratory Multiple Linear Regression
 
-To investigate whether the observed negative association between statistics anxiety and attainment persisted after accounting for other variables, we fitted a multiple linear regression model. Since we investigated the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics.
+Our above correlation describes the relationship between anxiety and attainment in isolation. However, grades may differ between universities, genders, degree years and levels of prior maths education, and if these characteristics are also related to STARS scores, the observed correlation could partly reflect them. We therefore decided to fit a multiple linear regression model to investigate whether the observed negative association between statistics anxiety and attainment persisted after accounting for these other variables. Since we investigated the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics. The regression also allows the effect to be expressed in units that are easier to interpret (percentage points of grade per point of STARS score) and reveals how much of the variation in grades the predictors explain.
+
 
 ##### Exploratory Data Analysis
 
@@ -305,7 +310,7 @@ Noting that there is more data for first and second year students in comparison 
 
 Finally, attainment vs STARS score varies by the highest level of maths education prior to university, with students who took A-Level Maths having higher grades for each STARS score in comparison to students who only took GCSE Maths.
 
-Therefore we have evidence to include these covariates in our multiple regression model. It is also important to analyse any correlation between covariates, as linear models assume that covariates are independent and identically distributed. The following correlation heatmap uses Cramer's V score to find the correlation between the categorical factors. 
+Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for correlation between covariates, since strongly correlated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. The following correlation heatmap uses Cramer's V score to find the correlation between the categorical factors. 
 
 ```{r reg_pairplot, fig.width=5, fig.height=3}
 
@@ -333,9 +338,15 @@ cv_plot <- ggplot(cv_long, aes(v1, v2, fill = cramer_v)) +
 cv_plot
 ```
 
-From this plot, we saw that the highest correlation is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However the correlation isn't very large, so we didn't control for correlation between covariates when creating a model. 
+From this plot, we saw that the highest correlation is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However the correlation isn't very large, so multicollinearity is unlikely to be a problem and we did not make any adjustment for it when creating the model. 
 
 ##### Model fitting
+
+Our full model was
+$$
+\text{Grade}_i = \beta_0 + \beta_1\,\text{STARS}_i + \sum_{j=2}^{7} \gamma_j\,\text{Uni}_{ij} + \delta\,\text{Male}_i + \sum_{k=2}^{3} \theta_k\,\text{Year}_{ik} + \sum_{m=2}^{4} \lambda_m\,\text{MathEdu}_{im} + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2),
+$$
+where $\text{Grade}_i$ is the statistics module grade (%) of student $i$, $\text{STARS}_i$ is their total STARS score, and $\text{Male}_i$ is an indicator equal to 1 if the student is male and 0 if female. $\text{Uni}_{ij}$, $\text{Year}_{ik}$ and $\text{MathEdu}_{im}$ are indicator variables for university, degree year and highest level of prior mathematics education respectively, each with one reference category. $\varepsilon_i$ are independent errors with constant variance $\sigma^2$.
 
 We used backward elimination to obtain a more parsimonious model. Starting with the full model, we used partial F-tests to assess each explanatory variable. At each step, the variable with the largest p-value was considered for removal, provided it was not STARS score since it was the main variable of interest.
 
@@ -348,7 +359,7 @@ lm_full <- lm(grade_numeric ~ stars_score + factor(university) + factor(gender) 
 drop1(lm_full, test = "F")
 ```
 
-Based on the partial F-test, we first removed prior mathematics education since it had the largest p-value, $0.102>0.05$. We then refitted the model without this term and did another partial F-test to examine the remaining terms.
+Based on the partial F-test, we first removed prior mathematics education since it had the largest p-value, $0.103>0.05$. We then refitted the model without this term and did another partial F-test to examine the remaining terms.
 
 ```{r}
 lm2 <- lm(grade_numeric ~ stars_score + factor(university) + factor(gender) + factor(degree_year), data = reg_data)
@@ -357,6 +368,11 @@ drop1(lm2, test = "F")
 ```
 
 Since none of the terms have a p-value greater than 0.05, we remove no further terms from this model.
+
+Our final model was therefore
+$$
+\text{Grade}_i = \beta_0 + \beta_1\,\text{STARS}_i + \sum_{j=2}^{7} \gamma_j\,\text{Uni}_{ij} + \delta\,\text{Male}_i + \sum_{k=2}^{3} \theta_k\,\text{Year}_{ik} + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2).
+$$
 
 ```{r}
 summary(lm2)
@@ -375,6 +391,8 @@ plot(lm2)
 We also examined residual diagnostic plots to assess the assumptions of the linear regression model. These indicated slight heteroscedasticity and deviations from normality in the tails of the Q-Q plot. However, these departures were not considered sufficiently severe to invalidate the analysis. 
 
 This suggests that the negative association between statistics anxiety and attainment observed in the Pearson correlation analysis persists after adjusting for other student characteristics. However, this still cannot establish causation.
+
+Ultimately, for our report we have opted to use the Pearson correlation rather than the regression. The regression coefficient for STARS score describes the association only after adjusting for university, gender and degree year, so its value depends on which covariates are included in the model. Furthermore, it is measured in percentage points of grade per STARS point, thus, it is not a standardised effect size and can't be simply converted to Cohen's $d$. In contrast, Pearson correlation is already standardised, converts straightforwardly to $d$, and our scatterplot supports its linearity assumption. The residual diagnostics also showed slight heteroscedasticity and tail departures from normality, which added some uncertainty to the regression estimate. However, it is still important to note that the two approaches agree in direction and significance (Pearson $r$ = `r round(grades_cor_result$estimate, 2)`; regression $\beta = -0.083$, $p = 0.0002$), so the choice affects the precise magnitude of the effect rather than our overall conclusion.
 
 
 #### Alternate Anxiety Measures
@@ -460,7 +478,7 @@ ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+## Conclusions
+
 
 ## References
-
-
