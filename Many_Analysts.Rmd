@@ -256,10 +256,97 @@ The scatterplot shows no obvious outliers or curvature, so the relationship betw
 
 
 ### Relationships Between Other Variables
+[Paragraph here introducing why we chose to do further analyses, and what we did]
+
+#### Alternate Anxiety Measures
+
+We firstly examined the relationships between different measures of statistics anxiety and mathematics anxiety. This allowed us to investigate whether the phrasing of the questions was influencing the results, as well as how closely related maths and statistics anxiety were. This is particularly important as it may be difficult to distinguish the effects of each type of anxiety on attainment.
+
+The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
+
+We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to distinguish the relationship between statistics anxiety and attainment compared to maths anxiety and attainment.
+
+```{r, fig.width=5, fig.height=3}
+
+# STARS Score 
+stars_totals <- smarvus_uk_cleangrades %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS, na.rm = TRUE)
+  )
+
+# STARS-M Score 
+stars_m_totals <- smarvus_uk_cleangrades %>%
+  subset(select = -c(Q8.1_21)) %>%
+  pivot_longer(
+    cols = starts_with("Q8.1_"),
+    values_to = "STARS_M"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_m_score = sum(STARS_M, na.rm = TRUE)
+  )
+
+# R-MARS Score 
+rmars_totals <- smarvus_uk_cleangrades %>%
+  subset(select = -c(Q8.2_21, Q8.2_22, Q8.2_23, Q8.2_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q8.2_"),
+    values_to = "R_MARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    rmars_score = sum(R_MARS, na.rm = TRUE)
+  )
+
+# R-MARS-S Score 
+rmars_s_totals <- smarvus_uk_cleangrades %>%
+  subset(select = -c(Q7.2_20, Q7.2_21, Q7.2_22, Q7.2_23)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.2_"),
+    values_to = "R_MARS_S"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    rmars_s_score = sum(R_MARS_S, na.rm = TRUE)
+  )
+
+# join into a single df
+smarvus_all_scores <- smarvus_uk_cleangrades %>%
+  left_join(stars_totals, by = "unique_id") %>%
+  left_join(stars_m_totals, by = "unique_id") %>%
+  left_join(rmars_totals, by = "unique_id") %>%
+  left_join(rmars_s_totals, by = "unique_id")
+
+anxiety_corrs <- smarvus_all_scores %>%
+  select(stars_score, stars_m_score, rmars_score, rmars_s_score) %>%
+  cor(use = "complete.obs")
+
+cor_long <- as.data.frame(as.table(anxiety_corrs))
+
+ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
+                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
+  geom_text(aes(label = round(Freq, 2)), color = "black", size = 4.5) +
+  theme_minimal() +
+  labs(
+    title = "Correlation Heatmap of Anxiety Measures",
+    x = "", 
+    y = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 
 #### Exploratory Multiple Linear Regression
 
-Our above correlation describes the relationship between anxiety and attainment in isolation. However, grades may differ between universities, genders, degree years and levels of prior maths education, and if these characteristics are also related to STARS scores, the observed correlation could partly reflect them. We therefore decided to fit a multiple linear regression model to investigate whether the observed negative association between statistics anxiety and attainment persisted after accounting for these other variables. Since we investigated the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics. The regression also allows the effect to be expressed in units that are easier to interpret (percentage points of grade per point of STARS score) and reveals how much of the variation in grades the predictors explain.
+Our above correlation and effect size describes the relationship between anxiety and attainment in isolation. However, grades may differ between universities, genders, degree years and levels of prior maths education, and if these characteristics are also related to STARS scores, the observed correlation could partly reflect them. We therefore decided to fit a multiple linear regression model to investigate whether the observed negative association between statistics anxiety and attainment persisted after accounting for these other variables. Since we investigated the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics. The regression also allows the effect to be expressed in units that are easier to interpret (percentage points of grade per point of STARS score) and reveals how much of the variation in grades the predictors explain.
 
 
 ##### Exploratory Data Analysis
@@ -394,89 +481,6 @@ This suggests that the negative association between statistics anxiety and attai
 
 Ultimately, for our report we have opted to use the Pearson correlation rather than the regression. The regression coefficient for STARS score describes the association only after adjusting for university, gender and degree year, so its value depends on which covariates are included in the model. Furthermore, it is measured in percentage points of grade per STARS point, thus, it is not a standardised effect size and can't be simply converted to Cohen's $d$. In contrast, Pearson correlation is already standardised, converts straightforwardly to $d$, and our scatterplot supports its linearity assumption. The residual diagnostics also showed slight heteroscedasticity and tail departures from normality, which added some uncertainty to the regression estimate. However, it is still important to note that the two approaches agree in direction and significance (Pearson $r$ = `r round(grades_cor_result$estimate, 2)`; regression $\beta = -0.083$, $p = 0.0002$), so the choice affects the precise magnitude of the effect rather than our overall conclusion.
 
-
-#### Alternate Anxiety Measures
-
-The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
-
-We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to isolate the effect of statistics anxiety on attainment while accounting for maths anxiety.
-
-```{r, fig.width=5, fig.height=3}
-
-# STARS Score 
-stars_totals <- smarvus_uk_cleangrades %>%
-  subset(select = -c(Q7.1_24)) %>%
-  pivot_longer(
-    cols = starts_with("Q7.1_"),
-    values_to = "STARS"
-  ) %>%
-  summarise(
-    .by = unique_id,
-    stars_score = sum(STARS, na.rm = TRUE)
-  )
-
-# STARS-M Score 
-stars_m_totals <- smarvus_uk_cleangrades %>%
-  subset(select = -c(Q8.1_21)) %>%
-  pivot_longer(
-    cols = starts_with("Q8.1_"),
-    values_to = "STARS_M"
-  ) %>%
-  summarise(
-    .by = unique_id,
-    stars_m_score = sum(STARS_M, na.rm = TRUE)
-  )
-
-# R-MARS Score 
-rmars_totals <- smarvus_uk_cleangrades %>%
-  subset(select = -c(Q8.2_21, Q8.2_22, Q8.2_23, Q8.2_24)) %>%
-  pivot_longer(
-    cols = starts_with("Q8.2_"),
-    values_to = "R_MARS"
-  ) %>%
-  summarise(
-    .by = unique_id,
-    rmars_score = sum(R_MARS, na.rm = TRUE)
-  )
-
-# R-MARS-S Score 
-rmars_s_totals <- smarvus_uk_cleangrades %>%
-  subset(select = -c(Q7.2_20, Q7.2_21, Q7.2_22, Q7.2_23)) %>%
-  pivot_longer(
-    cols = starts_with("Q7.2_"),
-    values_to = "R_MARS_S"
-  ) %>%
-  summarise(
-    .by = unique_id,
-    rmars_s_score = sum(R_MARS_S, na.rm = TRUE)
-  )
-
-# join into a single df
-smarvus_all_scores <- smarvus_uk_cleangrades %>%
-  left_join(stars_totals, by = "unique_id") %>%
-  left_join(stars_m_totals, by = "unique_id") %>%
-  left_join(rmars_totals, by = "unique_id") %>%
-  left_join(rmars_s_totals, by = "unique_id")
-
-anxiety_corrs <- smarvus_all_scores %>%
-  select(stars_score, stars_m_score, rmars_score, rmars_s_score) %>%
-  cor(use = "complete.obs")
-
-cor_long <- as.data.frame(as.table(anxiety_corrs))
-
-ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
-                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
-  geom_text(aes(label = round(Freq, 2)), color = "black", size = 4.5) +
-  theme_minimal() +
-  labs(
-    title = "Correlation Heatmap of Anxiety Measures",
-    x = "", 
-    y = ""
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
 
 ## Conclusions
 
