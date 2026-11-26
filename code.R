@@ -718,3 +718,18 @@ print(grades_rmarss_d)
 
 grades_rmarss_CI <- effectsize::r_to_d(r= grades_rmarss_cor_result$conf.int[1:2])
 print(grades_rmarss_CI)
+
+forest_row <- data.frame(
+  Variable = "Choices made",
+  d = as.numeric(grades_rmarss_d),
+  CI_low = as.numeric(grades_rmarss_CI[1]),
+  CI_high = as.numeric(grades_rmarss_CI[2]))
+
+#forest_data <- rbind(forest_row, forest_row2, forest_row3)
+
+#ggplot(forest_data, aes(y = Variable, x = d, xmin = CI_low, xmax = CI_high)) +
+  #geom_point(size = 3) +
+  #geom_errorbarh(height = 0.2) +
+  #geom_vline(xintercept = 0, linetype = "dashed") +
+  #theme_minimal() +
+  #xlab("Cohen's d")
