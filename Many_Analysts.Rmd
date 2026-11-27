@@ -66,7 +66,7 @@ We chose to include only universities in the UK in our analysis because this ens
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
 ```
  
-Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses.These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%), as well as students that responded "Yes" to the question "You have just answered three reasoning problems. Did you look any of the answers up online?" (1.76%). This was to preserve the reliability of responses.
+Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses. These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%). This was to preserve the reliability of responses.
 
 ```{r attention_checks}
 smarvus_filtered <- smarvus_uk %>%
@@ -201,7 +201,7 @@ grade_na_byuni <- ggplot(
 grade_na_byuni
 ```
 
-The degree of missingness also varied largely across degree years. The majority of students surveyed were first and second year (92%) and over half of their grade data was missing. Around 97% of grade data for students in third year was missing, while 100% of grade data for students in fourth year being missing. As a result, it must be noted that our analysis may be less applicable to students in later years. 
+The degree of missingness also varied largely across degree years. The majority of students surveyed were first and second year (92%) and over half of their grade data was missing. Around 97% of grade data for students in third year was missing, while 100% of grade data for students in fourth year being missing. This could be because the only mandatory statistics courses take place in the 1st and 2nd years of students degrees and so only a few respondents have statistics module grades to report in 3rd and 4th year. As a result, it must be noted that our analysis may be less applicable to students in later years. 
 
 We then investigated the distribution of reported grades to check for reliability and any possible issues with the data. We also examined the distribution of the grades, to see that the majority lie around 65% with very few grades below ~30%. However, this plot is an average distribution and may not be the same across individual universities. A histogram of grades revealed a very large spike around 65%, so we looked at the grade data for each university, finding largely reasonable distributions apart from at the University of Southampton. The below bar graph shows their distribution of grades. This motivates standardising the grades so that we account for some courses/universities having different grade distributions.
 
@@ -389,7 +389,7 @@ The scatterplot shows no obvious outliers or curvature, so the relationship betw
 
 
 ## Relationships Between Other Variables
-[Paragraph here introducing why we chose to do further analyses, and what we did]
+We then performed additional exploratory analyses in order to assess the reliability of our results and check to see if other factors may influence the effect size. More specifically, we looked at alternative anxiety measures such as "statistics" vs "mathematics" anxiety scores to see whether the observed effect was specific to statistics anxiety. Additionally, we fitted a regression model to confirm that our negative relationship between anxiety and attainment remained when accounting for other variables such as: university, gender, degree year and previous mathematics education. These analyses were conducted so that we could assess the reliability of our result however are exploratory and do not establish causation. 
 
 ### Alternate Anxiety Measures
 
