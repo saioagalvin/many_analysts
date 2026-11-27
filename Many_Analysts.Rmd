@@ -6,12 +6,12 @@ date: "December 2026"
 bibliography: references.bib
 fontsize: 12pt
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     number_sections: true
     fig_caption: true
     latex_engine: xelatex
+  html_document:
+    df_print: paged
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{float}
@@ -32,7 +32,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(patchwork)
 library(rstatix)
-library(kable)
+library(knitr)
 
 source('code.R')
 
@@ -249,14 +249,15 @@ As we can see, almost all grades at Southampton were reported as 65%. Of the 71 
 
 Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
-```{r grades_hist, fig.width=5, fig.height=3}
+```{r grades_clean, fig.width=5, fig.height=3}
 # removing all observations that are missing grade data (assuming missing at random),
 # also remove zero grades, and University of Southampton
 smarvus_uk_cleangrades <- smarvus_uk_clean[
   !is.na(smarvus_uk_clean$grade_numeric) &
     smarvus_uk_clean$grade_numeric != 0 &
     smarvus_uk_clean$university != "University of Southampton", ]
-
+N <- nrow(smarvus_uk_cleangrades)
+mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
 # table to check percentage of responders removed after filtering by missing grade
 seq_grade_changes <- smarvus_uk_clean %>%
   summarise(
