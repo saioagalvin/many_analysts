@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(patchwork)
 library(rstatix)
-library(kable)
+library(knitr)
 
 source('code.R')
 
