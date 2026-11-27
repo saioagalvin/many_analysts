@@ -514,7 +514,7 @@ Noting that there is more data for first and second year students in comparison 
 
 Finally, attainment vs STARS score varies by the highest level of maths education prior to university, with students who took A-Level Maths having higher grades for each STARS score in comparison to students who only took GCSE Maths.
 
-Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for correlation between covariates, since strongly correlated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. The following correlation heatmap uses Cramér's V score to find the association between the categorical factors. 
+Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for association between covariates, since strongly associated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. To do this, we use Cramér's V, which is a measure of correlation used for categorical variables [@mchugh_2018]. Specifically, it measures the strength of the association between two categorical variables. It has a possible range of 0 to 1, with 0 indicating no association and 1 indicating a perfect association, though unlike Pearson's correlation coefficient, there is no indication of the direction of the relationship with Cramér's V. The following heatmap uses Cramér's V to show the strength of the association between the categorical predictors. 
 
 ```{r reg_cramers_v, fig.width=5, fig.height=3}
 
