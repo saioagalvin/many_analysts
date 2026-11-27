@@ -1,17 +1,18 @@
 ---
 title: "What Effect Does Statistics Anxiety Have on Attainment?"
-authors: "Ryan Barber, Ellie Hooper, Grace Galloway, Saioa Galvin, Louisa de Ste. Croix"
+author:
+  - "Ryan Barber, Ellie Hooper, Grace Galloway, Saioa Galvin, Louisa de Ste. Croix"
 affiliation: "The University of Edinburgh"
 date: "December 2026"
 bibliography: references.bib
 fontsize: 12pt
 output:
+  html_document:
+    df_print: paged
   pdf_document:
     number_sections: true
     fig_caption: true
     latex_engine: xelatex
-  html_document:
-    df_print: paged
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{float}
@@ -20,7 +21,10 @@ header-includes:
 - \floatplacement{figure}{H}
 ---
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b9271f52bcfca47ec64be034d0008a204526e052
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo      = TRUE,    # This shows all code from the main body but will need to be changed                         # for code we want invisible 

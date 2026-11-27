@@ -878,18 +878,230 @@ print(grades_rmarss_d)
 grades_rmarss_CI <- effectsize::r_to_d(r= grades_rmarss_cor_result$conf.int[1:2])
 print(grades_rmarss_CI)
 
-forest_row <- data.frame(
-  Variable = "Choices made",
-  d = as.numeric(grades_rmarss_d),
-  CI_low = as.numeric(grades_rmarss_CI[1]),
-  CI_high = as.numeric(grades_rmarss_CI[2]))
+no_attention <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0,
+    university != "University of Southampton"
+  )
 
-#forest_data <- rbind(forest_row, forest_row2, forest_row3)
+no_attention <- no_attention %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    no_attention %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
 
-#ggplot(forest_data, aes(y = Variable, x = d, xmin = CI_low, xmax = CI_high)) +
-  #geom_point(size = 3) +
-  #geom_errorbarh(height = 0.2) +
-  #geom_vline(xintercept = 0, linetype = "dashed") +
-  #theme_minimal() +
-  #xlab("Cohen's d")
+not_just_psych_base <- smarvus_uk %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0,
+    university != "University of Southampton"
+  )
 
+not_just_psych <- not_just_psych_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    not_just_psych_base %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
+
+full_attention_check_base <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1,
+    Q11.1_9 == 3,
+    Q13.1_17 == 2,
+    Q15.1_9 == 4
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0,
+    university != "University of Southampton"
+  )
+
+full_attention_check <- full_attention_check_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    full_attention_check_base %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
+
+no_zeros_base <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    university != "University of Southampton"
+  )
+
+no_zeros <- no_zeros_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    no_zeros_base %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
+
+with_southampton_base <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0
+  )
+
+with_southampton <- with_southampton_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    with_southampton_base %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
+
+datasets <- list(no_attention = no_attention,
+                 not_just_psych = not_just_psych,
+                 full_attention_check = full_attention_check,
+                 with_zeros = no_zeros,
+                 with_southampton = with_southampton)
+
+forest_list <- lapply(names(datasets), function(name) {
+  
+  dat <- datasets[[name]]
+  
+  cor_result <- cor.test(
+    dat$stars_score,
+    dat$grade_numeric
+  )
+  
+  d_est <- effectsize::r_to_d(cor_result$estimate)
+  
+  d_ci <- effectsize::r_to_d(
+    r = cor_result$conf.int[1:2])
+  
+  data.frame(
+    Variable = name,
+    d = as.numeric(d_est),
+    CI_low = as.numeric(d_ci[1]),
+    CI_high = as.numeric(d_ci[2]))
+})
+
+forest_data <- do.call(rbind, forest_list)
+
+forest_data <- forest_data %>%
+  mutate(Label = sprintf("%.2f [%.2f, %.2f]",
+                    d, CI_low, CI_high))
+ggplot(forest_data,
+       aes(y = Variable,
+           x = d,
+           xmin = CI_low,
+           xmax = CI_high)) +
+  geom_point(size = 3) +
+  geom_errorbarh(height = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_text(
+    aes(x = max(CI_high) + 0.25,
+        label = Label),
+    hjust = 0
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Effect sizes from Sensitivity Analysis",
+    x = "Cohen's d",
+    y = NULL
+  ) +
+  xlim(min(forest_data$CI_low),
+       max(forest_data$CI_high) + 0.5)
