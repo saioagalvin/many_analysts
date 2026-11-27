@@ -387,7 +387,8 @@ The scatterplot shows no obvious outliers or curvature, so the relationship betw
 
 
 ### Relationships Between Other Variables
-[Paragraph here introducing why we chose to do further analyses, and what we did]
+
+We then performed additional exploratory analyses in order to assess the reliability of our results and check to see if other factors may influence the effect size. More specifically, we looked at alternative anxiety measures such as "statistics" vs "mathematics" anxiety scores to see whether the observed effect was specific to statistics anxiety. Additionally, we fitted a regression model to confirm that our negatve relationship between anxiety and attainment remained when accounting for other variables such as: university, gender, degree year and previous mathematics education. These analyses were conducted so that we could assess the reliability of our result however are exploratory and do not establish causation.
 
 #### Alternate Anxiety Measures
 
