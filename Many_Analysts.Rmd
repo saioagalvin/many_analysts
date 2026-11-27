@@ -57,13 +57,17 @@ The data is from an International Multi-Centre Study of Statistics and Mathemati
 ## Data Processing
 
 ```{r load_data}
-smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE, na = c("", "NA", "Not Available"))
+smarvus_raw <- read_csv("smarvus_complete_050524.csv",
+                      show_col_types = FALSE, na = c("", "NA", 
+                                          "Not Available"))
 ```
 
 We chose to include only universities in the UK in our analysis because this ensures that our results aren't affected by any other cultural differences between participants that could affect grades or maths anxiety. Additionally, it is the country with the most observations, at 2962, making up almost 24% of the data. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
 
 ```{r uk_filter}
-smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
+smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England",
+                                                     "Scotland",
+                                                     "Northern Ireland"), ]
 ```
  
 Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses. These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%). This was to preserve the reliability of responses.
@@ -77,13 +81,15 @@ smarvus_filtered <- smarvus_uk %>%
     Q9.1_22 == 1
   )
 
-# table to check percentage of responders removed after filtering by attention, sequentially
+# table to check percentage of responders removed after filtering
+#by attention, sequentially
 seq_check_changes <- smarvus_uk %>%
   summarise(
     initial   = n(),
     amnesty   = sum(attention_amnesty == "Yes", na.rm = TRUE),
     check1    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1, na.rm = TRUE),
-    check2    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5, na.rm = TRUE)
+    check2    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5, 
+                    na.rm = TRUE)
   ) %>%
   pivot_longer(
     cols = everything(),
@@ -155,7 +161,8 @@ Only 20 universities in the SMARVUS data provided grade information for the stat
 # convert all percentage grades to numeric
 # uk grade entries are all percentages or numeric, no letters
 smarvus_clean <- smarvus_psych %>%
-  mutate(grade_numeric = parse_number(grade, na = c("", "NA", "Not Available")))
+  mutate(grade_numeric = parse_number(grade, na = c("", "NA", 
+                                                    "Not Available")))
 
 # table of grade data by uk uni
 uk_university_nas <- smarvus_clean %>%
@@ -213,7 +220,8 @@ degree_nas_pct <- smarvus_clean %>%
     pct_na = round(sum(is.na(grade_numeric)) / n * 100, 2)
   )
 
-colnames(degree_nas_pct) <- c("Degree Year", "Number of Grade Observations", "Percentage of NA Grade Observations")
+colnames(degree_nas_pct) <- c("Degree Year", "Number of Grade Observations", 
+                              "Percentage of NA Grade Observations")
 
 kable(degree_nas_pct)
 ```
@@ -261,7 +269,8 @@ As we can see, almost all grades at Southampton were reported as 65%. Of the 71 
 Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
 ```{r grades_clean, fig.width=5, fig.height=3}
-# removing all observations that are missing grade data (assuming missing at random),
+# removing all observations that are missing grade data (assuming missing 
+#at random),
 # also remove zero grades, and University of Southampton
 smarvus_uk_cleangrades <- smarvus_clean %>%
   filter(
@@ -273,15 +282,18 @@ smarvus_uk_cleangrades <- smarvus_clean %>%
 N <- nrow(smarvus_uk_cleangrades)
 mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
 
-# table to check percentage of responders removed after filtering by missing grade
+# table to check percentage of responders removed after filtering by 
+#missing grade
 seq_grade_changes <- smarvus_clean %>%
   summarise(
     initial = n(),
     missing_grade = sum(!is.na(grade_numeric), na.rm = TRUE),
-    zero_removed = sum(!is.na(grade_numeric) & smarvus_uk_clean$grade_numeric != 0, na.rm = TRUE),
+    zero_removed = sum(!is.na(grade_numeric) & smarvus_uk_clean$grade_numeric 
+                       != 0, na.rm = TRUE),
     southampton_removed = sum(!is.na(grade_numeric) 
                               & smarvus_uk_clean$grade_numeric != 0
-                              & smarvus_uk_clean$university != "University of Southampton", 
+                              & smarvus_uk_clean$university != 
+                                "University of Southampton", 
                               na.rm = TRUE)
   ) %>%
   pivot_longer(
@@ -595,7 +607,7 @@ From this plot, we saw that the strongest association is between university and 
 
 Our full model was
 $$
-\text{Grade}_i = \beta_0 + \beta_1\,\text{STARS}_i + \sum_{j=2}^{7} \gamma_j\,\text{Uni}_{ij} + \delta\,\text{Male}_i + \sum_{k=2}^{3} \theta_k\,\text{Year}_{ik} + \sum_{m=2}^{4} \lambda_m\,\text{MathEdu}_{im} + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2),
+\text{Grade}_i = \beta_0 + \beta_1\,\text{STARS}_i + \sum_{j=2}^{7} \gamma_j\,\text{Uni}_{ij} + \delta\,\text{Male}_i + \sum_{k=2}^{3} \theta_k\,\text{Year}_{ik} + \sum_{m=2}^{4} \lambda_m\,\text{MathEdu}_{im} + \varepsilon_i,$$ $$ \varepsilon_i \sim N(0, \sigma^2),
 $$
 where $\text{Grade}_i$ is the statistics module grade (%) of student $i$, $\text{STARS}_i$ is their total STARS score, and $\text{Male}_i$ is an indicator equal to 1 if the student is male and 0 if female. $\text{Uni}_{ij}$, $\text{Year}_{ik}$ and $\text{MathEdu}_{im}$ are indicator variables for university, degree year and highest level of prior mathematics education respectively, each with one reference category. $\varepsilon_i$ are independent errors with constant variance $\sigma^2$.
 
@@ -615,7 +627,8 @@ drop1(lm_full, test = "F")
 Based on the partial F-test, we first removed prior mathematics education since it had the largest p-value, $0.103>0.05$. We then refitted the model without this term and did another partial F-test to examine the remaining terms.
 
 ```{r}
-lm2 <- lm(grade_numeric ~ stars_score + factor(university) + factor(gender) + factor(degree_year), data = reg_data)
+lm2 <- lm(grade_numeric ~ stars_score + factor(university) + factor(gender) + 
+            factor(degree_year), data = reg_data)
 
 drop1(lm2, test = "F")
 ```
