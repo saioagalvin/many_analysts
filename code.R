@@ -1052,11 +1052,47 @@ with_southampton <- with_southampton_base %>%
     by = "unique_id"
   )
 
+main_analysis_base <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0,
+    university != "University of Southampton"
+  )
+
+main_analysis <- main_analysis_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    main_analysis_base %>%
+      distinct(unique_id, grade_numeric),
+    by = "unique_id"
+  )
 datasets <- list(no_attention = no_attention,
                  not_just_psych = not_just_psych,
                  full_attention_check = full_attention_check,
                  with_zeros = no_zeros,
-                 with_southampton = with_southampton)
+                 with_southampton = with_southampton, 
+                 main_analysis = main_analysis)
 
 forest_list <- lapply(names(datasets), function(name) {
   
