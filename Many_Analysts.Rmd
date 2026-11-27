@@ -291,6 +291,7 @@ stars_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_num
     x = "Total STARS Score (23 - 115)",
     y = "Statistics Module Grade (%)"
   ) +
+  scale_y_continuous(limits = c(20, 100)) +
   theme_minimal()
 
 stars_attainment
