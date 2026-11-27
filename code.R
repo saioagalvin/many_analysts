@@ -327,7 +327,16 @@ ggplot(smarvus_uk_gradecheck, aes(x = university, y = grade_numeric)) +
 
 #actually do bar graph of each to look closer
 grades_byuni <- smarvus_uk_gradecheck %>%
-  filter(university %in% unis_to_plot) %>%
+  filter(university %in% c(
+    "Anglia Ruskin University",
+    "Bournemouth University",
+    "Queen's University Belfast",
+    "Teesside University",
+    "University of Bradford",
+    "University of Lincoln",
+    "University of Southampton",
+    "University of Sussex"
+    )) %>%
   mutate(
     grade_band = cut(
       grade_numeric,

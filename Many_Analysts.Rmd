@@ -293,6 +293,7 @@ stars_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_num
     x = "Total STARS Score (23 - 115)",
     y = "Statistics Module Grade (%)"
   ) +
+  scale_y_continuous(limits = c(20, 100)) +
   theme_minimal()
 
 stars_attainment
@@ -452,7 +453,11 @@ cv_long <- expand_grid(v1 = cat_vars, v2 = cat_vars) %>%
 cv_plot <- ggplot(cv_long, aes(v1, v2, fill = cramer_v)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
+<<<<<<< HEAD
+                       midpoint = 0, limit = c(0, 1), name = "Correlation (V)") +
+=======
                        midpoint = 0.5, limit = c(0, 1), name = "Cramér's V") +
+>>>>>>> 7455c7ca6fceecc61deb583434aef8ebd367e606
   geom_text(aes(label = round(cramer_v, 2)), color = "black", size = 4.5) +
   theme_minimal() +
   labs(
