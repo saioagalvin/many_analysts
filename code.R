@@ -48,7 +48,8 @@ smarvus_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
-    Q8.1_21 == 5
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
   )
 
 n_before <- nrow(smarvus_raw)
@@ -249,6 +250,17 @@ smarvus_uk_clean %>%
 ggplot(smarvus_uk_clean, aes(x=grade_numeric)) + 
   geom_histogram(bins=100)
 
+# grade distribution has very large spike at around 65? examine grade distribution by uni
+# to look for outliers: note have commented out as better to do this 
+# below after removing NA grades
+# ggplot(smarvus_uk_clean, aes(x = university, y = grade_numeric)) +
+#  geom_boxplot() +
+#  labs(title = "Statistics Module Grades by University",
+#    x = "University",
+#    y = "Statistics Module Grade (%)") +
+#  theme_minimal() +
+#  theme(axis.text.x = element_text(angle = 45), hjust = 1)
+
 # find percentage of na grade in each degree year
 degree_nas <- smarvus_uk_clean %>%
   group_by(degree_year) %>%
@@ -299,9 +311,156 @@ grade_summary <- smarvus_uk_clean %>%
 
 print(grade_summary)
 
+#here remove all na grades then check distribution of grades by uni
+smarvus_uk_gradecheck <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric), 
+]
+
+
+ggplot(smarvus_uk_gradecheck, aes(x = university, y = grade_numeric)) +
+    geom_boxplot() +
+    labs(title = "Statistics Module Grades by University",
+      x = "University",
+      y = "Statistics Module Grade (%)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90))
+
+#actually do bar graph of each to look closer
+grades_byuni <- smarvus_uk_gradecheck %>%
+  filter(university %in% c(
+    "Anglia Ruskin University",
+    "Bournemouth University",
+    "Queen's University Belfast",
+    "Teesside University",
+    "University of Bradford",
+    "University of Lincoln",
+    "University of Southampton",
+    "University of Sussex"
+    )) %>%
+  mutate(
+    grade_band = cut(
+      grade_numeric,
+      breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
+      right = FALSE,
+      labels = c(
+        "0-9", "10-19", "20-29", "30-39", "40-49",
+        "50-59", "60-69", "70-79", "80-89", "90-100"
+      )
+    )
+  ) %>%
+  group_by(university, grade_band) %>%
+  summarise(count = n(), .groups = "drop")
+
+ggplot(
+  grades_byuni,
+  aes(x = grade_band, y = count)
+) +
+  geom_col() +
+  facet_wrap(~ university, scales = "free_y") +
+  labs(
+    title = "Grade Distributions by University",
+    x = "Statistics Module Grade (%)",
+    y = "Number of students"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# now investigate southampton and queen's specifically as their distributions are
+# suspicious: vast majority of grades are in 60-69 range
+# southampton
+grades_southampton <- smarvus_uk_gradecheck %>%
+  filter(university == "University of Southampton")
+
+southampton_plot <- ggplot(
+  grades_southampton,
+  aes(x = factor(grade_numeric))
+) +
+  geom_bar(
+    fill = "steelblue3",
+    colour = "white"
+  ) +
+  labs(
+    title = "Grade Distribution: University of Southampton",
+    x = "Statistics Module Grade (%)",
+    y = "Number of students"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8)
+  )
+
+southampton_plot
+
+
+# queen's
+grades_queens <- smarvus_uk_gradecheck %>%
+  filter(university == "Queen's University Belfast")
+
+queens_plot <- ggplot(
+  grades_queens,
+  aes(x = factor(grade_numeric))
+) +
+  geom_bar(
+    fill = "steelblue3",
+    colour = "white"
+  ) +
+  labs(
+    title = "Grade Distribution: Queen's University Belfast",
+    x = "Statistics Module Grade (%)",
+    y = "Number of students"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8)
+  )
+
+queens_plot
+# after making plots, queen's actually looks alright: 
+# most grades are in 60-69, but could just be courses with small standard deviation
+# some spikes at 63,64 and 68, but don't look unreasonable.
+# southampton however is very suspicious: 
+# over 60 students got exactly a 65. table below shows this
+southampton_grade_table <- grades_southampton %>%
+  count(grade_numeric, name = "Number of students") %>%
+  arrange(grade_numeric)
+
+southampton_grade_table
+# so we have 1 grade of 46, 1 grade of 54, 1 grade of 69 and 68 grades of 65.
+# very odd, go back and look at full distribution before we removed any students
+# to see if issue remains
+# all original Southampton respondents
+southampton_raw <- smarvus_raw %>%
+  filter(university == "University of Southampton")
+
+# count each original grade, including missing values
+southampton_raw %>%
+  mutate(
+    grade = trimws(grade),
+    grade = na_if(grade, ""),
+    grade = if_else(
+      is.na(grade) | grade %in% c("NA", "Not Available"),
+      "Missing",
+      grade
+    )
+  ) %>%
+  count(grade, name = "Number of students") %>%
+  arrange(grade)
+# so confirms our filtering did not create the odd distribution:
+# before any of our filtering, of 163 students, 99 had grades reported, and 93
+# of these recieved a grade of 65. hence we will remove southampton.
+# after our filtering, of 71 students with reported grades, 68 received a 65.
+# suggests 65 may represent some kind of placeholder grade or data cleaning issue.
+
+
 # after making all missing into NA, missingness seems fairly uniform across years
-# so maybe just need to remove all rows with missing grades
-smarvus_uk_cleangrades <- smarvus_uk_clean[!is.na(smarvus_uk_clean$grade_numeric), ]
+# so maybe just need to remove all rows with missing grades, and additionally here 
+# remove 0 grades and uni of southampton due to suspicious distribution of grades
+
+smarvus_uk_cleangrades <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric) & 
+    smarvus_uk_clean$grade_numeric != 0 &
+    smarvus_uk_clean$university != "University of Southampton",
+  ]
 N <- nrow(smarvus_uk_cleangrades)
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
@@ -718,3 +877,19 @@ print(grades_rmarss_d)
 
 grades_rmarss_CI <- effectsize::r_to_d(r= grades_rmarss_cor_result$conf.int[1:2])
 print(grades_rmarss_CI)
+
+forest_row <- data.frame(
+  Variable = "Choices made",
+  d = as.numeric(grades_rmarss_d),
+  CI_low = as.numeric(grades_rmarss_CI[1]),
+  CI_high = as.numeric(grades_rmarss_CI[2]))
+
+#forest_data <- rbind(forest_row, forest_row2, forest_row3)
+
+#ggplot(forest_data, aes(y = Variable, x = d, xmin = CI_low, xmax = CI_high)) +
+  #geom_point(size = 3) +
+  #geom_errorbarh(height = 0.2) +
+  #geom_vline(xintercept = 0, linetype = "dashed") +
+  #theme_minimal() +
+  #xlab("Cohen's d")
+
