@@ -1,25 +1,24 @@
 ---
-title: "Many Analysts"
-authors: "Ryan Barber, Ellie Hooper, Grace Galloway, Saioa Galvin, Louisa de Ste. Croix"
+title: "What Effect Does Statistics Anxiety Have on Attainment?"
+author:
+  - "Ryan Barber, Ellie Hooper, Grace Galloway, Saioa Galvin, Louisa de Ste. Croix"
 affiliation: "The University of Edinburgh"
 date: "December 2026"
 bibliography: references.bib
 fontsize: 12pt
 output:
+  html_document:
+    df_print: paged
   pdf_document:
     number_sections: true
     fig_caption: true
     latex_engine: xelatex
-  html_document:
-    df_print: paged
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{float}
 - \usepackage{amsmath}
 - \usepackage{graphicx}
 - \floatplacement{figure}{H}
----
-
 ---
 
 ```{r setup, include=FALSE}
@@ -38,24 +37,23 @@ source('code.R')
 
 ```
 
-# What effect does statistics anxiety have on attainment?
 
-## Effect Size Summary
+# Effect Size Summary
 
 d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_result$conf.int[1]), 2)`, `r round(effectsize::r_to_d(grades_cor_result$conf.int[2]), 2)`] based on N = `r N`.
 
 
-## Summary of Analysis Approach
+# Summary of Analysis Approach
 
 We analysed data from UK Psychology undergraduates with university-reported statistics module grades who passed relevant attention checks. Statistics anxiety was measured using the total score of the 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis examined the relationship between total STARS score and statistics module grade (%), explored using Pearson's correlation coefficient, converted to Cohen's d. To investigate the reliability of this result, additional explorations included the correlation between maths and statistics anxiety so we could confirm that the use of "maths" vs "statistics" in the survey questions did not bias results. Additionally, a linear regression attempting to control for university, gender, and degree year was included. These final analyses were exploratory and do not aim to establish causation, instead ensuring that our final result still seemed reasonable when accounting for these other factors.
 
 
-## Details of the Analysis
-### Description of Dataset
+# Details of the Analysis
+## Description of Dataset
 
 The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) [@SMARVUS_paper]. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details. In the following sections, we discuss the data, what we decided to include in our final analysis and our methodology.
 
-### Data Processing
+## Data Processing
 
 ```{r load_data}
 smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE, na = c("", "NA", "Not Available"))
@@ -67,7 +65,7 @@ We chose to include only universities in the UK in our analysis because this ens
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
 ```
  
-Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses.These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%), as well as students that responded "Yes" to the question "You have just answered three reasoning problems. Did you look any of the answers up online?" (1.76%). This was to preserve the reliability of responses.
+Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses. These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%). This was to preserve the reliability of responses.
 
 ```{r attention_checks}
 smarvus_filtered <- smarvus_uk %>%
@@ -204,7 +202,7 @@ grade_na_byuni <- ggplot(
 grade_na_byuni
 ```
 
-The degree of missingness also varied largely across degree years. The majority of students surveyed were first and second year (92%) and over half of their grade data was missing. Around 97% of grade data for students in third year was missing, while 100% of grade data for students in fourth year being missing. As a result, it must be noted that our analysis may be less applicable to students in later years. 
+The degree of missingness also varied largely across degree years. The majority of students surveyed were first and second year (92%) and over half of their grade data was missing. Around 97% of grade data for students in third year was missing, while 100% of grade data for students in fourth year being missing. This could be because the only mandatory statistics courses take place in the 1st and 2nd years of students degrees and so only a few respondents have statistics module grades to report in 3rd and 4th year. As a result, it must be noted that our analysis may be less applicable to students in later years. 
 
 ```{r}
 degree_nas_pct <- smarvus_clean %>%
@@ -356,7 +354,7 @@ grades_hist <- ggplot(smarvus_100_scale, aes(x = grade_100)) +
 grades_hist
 ```
 
-### Statistics Anxiety
+## Statistics Anxiety
 
 To measure statistics anxiety, the STARS (Statistics Anxiety Rating Scale) tool was used. The 3 anxiety subscales of STARS were used, giving 23 total items. Each is to be rated on a 5-point scale, with a 1 indicating "no anxiety" related to the stated item, and a 5 indicating "a great deal of anxiety". We calculated a total STARS score for each participant by summing their responses for the 23 items (excluding the attention check question at the end of the section). The possible range for total STARS score is 23-115, with a higher score indicating greater statistics anxiety.
 
@@ -398,13 +396,14 @@ stars_hist <- ggplot(smarvus_uk_scored, aes(x = stars_score)) +
 stars_hist
 ```
 
-### Relationship Between Statistics Anxiety and Attainment
+## Relationship Between Statistics Anxiety and Attainment
 
 To investigate the relationship between statistics anxiety and attainment, we looked at the association between participants' total STARS score and their grades in their statistics modules (in percentage).
 
 Below is a scatterplot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
 ```{r, fig.width=5, fig.height=3}
-stars_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_numeric)) +
+stars_attainment <- ggplot(smarvus_uk_scored, 
+                           aes(x = stars_score, y = grade_numeric)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
   labs(
@@ -427,10 +426,10 @@ We additionally converted the correlation coefficient into our Cohen's d effect 
 The scatterplot shows no obvious outliers or curvature, so the relationship between STARS score and grade appears to be approximately linear. Both histograms are also roughly symmetric and unimodal, so neither variable is strongly skewed.  We therefore considered Pearson's correlation more appropriate than Spearman's. Furthermore, the conversion from a correlation to Cohen's $d$, $d = \frac{2r}{\sqrt{1-r^2}}$, is defined for Pearson's $r$, so using Spearman would only give a rough approximation. 
 
 
-### Relationships Between Other Variables
-[Paragraph here introducing why we chose to do further analyses, and what we did]
+## Relationships Between Other Variables
+We then performed additional exploratory analyses in order to assess the reliability of our results and check to see if other factors may influence the effect size. More specifically, we looked at alternative anxiety measures such as "statistics" vs "mathematics" anxiety scores to see whether the observed effect was specific to statistics anxiety. Additionally, we fitted a regression model to confirm that our negative relationship between anxiety and attainment remained when accounting for other variables such as: university, gender, degree year and previous mathematics education. These analyses were conducted so that we could assess the reliability of our result however are exploratory and do not establish causation. 
 
-#### Alternate Anxiety Measures
+### Alternate Anxiety Measures
 
 We firstly examined the relationships between different measures of statistics anxiety and mathematics anxiety. This allowed us to investigate whether the phrasing of the questions was influencing the results, as well as how closely related maths and statistics anxiety were. This is particularly important as it may be difficult to distinguish the effects of each type of anxiety on attainment.
 
@@ -494,7 +493,8 @@ cor_long <- as.data.frame(as.table(anxiety_corrs))
 ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
-                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
+                       midpoint = 0, limit = c(-1, 1), 
+                       name = "Correlation (r)") +
   geom_text(aes(label = round(Freq, 2)), color = "black", size = 4.5) +
   theme_minimal() +
   labs(
@@ -505,12 +505,12 @@ ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-#### Exploratory Multiple Linear Regression
+### Exploratory Multiple Linear Regression
 
 Our above correlation and effect size describes the relationship between anxiety and attainment in isolation. However, grades may differ between universities, genders, degree years and levels of prior maths education, and if these characteristics are also related to STARS scores, the observed correlation could partly reflect them. We therefore decided to fit a multiple linear regression model to investigate whether the observed negative association between statistics anxiety and attainment persisted after accounting for these other variables. Since we investigated the effect on attainment, statistics module grade was used as the response variable with total STARS score as the main explanatory variable. University, gender, degree year and prior mathematics education were included as additional explanatory variables to account for potential differences in institutional context and student characteristics. The regression also allows the effect to be expressed in units that are easier to interpret (percentage points of grade per point of STARS score) and reveals how much of the variation in grades the predictors explain.
 
 
-##### Exploratory Data Analysis
+#### Exploratory Data Analysis
 
 Before fitting a model, we examine the relationship between the chosen covariates and the response variable, as well as any relationships between them. The analysis was restricted to participants identifying as either Female/Woman or Male/Man and any observations with missing values for any of the model variables were excluded, leaving 783 observations.
 
@@ -519,13 +519,15 @@ Before fitting a model, we examine the relationship between the chosen covariate
 reg_data <- smarvus_uk_scored %>%
   filter(gender %in% c("Female/Woman", "Male/Man")) %>%
   mutate(gender = factor(gender, levels = c("Female/Woman", "Male/Man"))) %>%
-  drop_na(grade_numeric, stars_score, university, gender, degree_year, math_edu_level)
+  drop_na(grade_numeric, stars_score, university, 
+          gender, degree_year, math_edu_level)
 
 covariates <- c("university", "gender", "degree_year", "math_edu_level")
 
 make_plot <- function(var) {
   
-  plot <- ggplot(reg_data, aes(x = stars_score, y = grade_numeric, color = .data[[var]])) +
+  plot <- ggplot(reg_data, aes(x = stars_score, y = grade_numeric, 
+                               color = .data[[var]])) +
     geom_point(alpha = 0.4) +
     geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
     labs(
@@ -558,7 +560,7 @@ Noting that there is more data for first and second year students in comparison 
 
 Finally, attainment vs STARS score varies by the highest level of maths education prior to university, with students who took A-Level Maths having higher grades for each STARS score in comparison to students who only took GCSE Maths.
 
-Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for correlation between covariates, since strongly correlated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. The following correlation heatmap uses Cramér's V score to find the association between the categorical factors. 
+Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for association between covariates, since strongly associated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. To do this, we use Cramér's V, which is a measure of correlation used for categorical variables [@mchugh_2018]. Specifically, it measures the strength of the association between two categorical variables. It has a possible range of 0 to 1, with 0 indicating no association and 1 indicating a perfect association, though unlike Pearson's correlation coefficient, there is no indication of the direction of the relationship with Cramér's V. The following heatmap uses Cramér's V to show the strength of the association between the categorical predictors. 
 
 ```{r reg_cramers_v, fig.width=5, fig.height=3}
 
@@ -588,7 +590,7 @@ cv_plot
 
 From this plot, we saw that the strongest association is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However, none of the associations are very large, so there is no evidence of redundancy amongst the covariates, therefore we did not make any adjustment for this when creating the model. 
 
-##### Model fitting
+#### Model fitting
 
 Our full model was
 $$
@@ -601,7 +603,9 @@ We used backward elimination to obtain a more parsimonious model. Starting with 
 ```{r}
 
 # Full model
-lm_full <- lm(grade_numeric ~ stars_score + factor(university) + factor(gender) + factor(degree_year) + factor(math_edu_level), data = reg_data)
+lm_full <- lm(grade_numeric ~ stars_score + factor(university) 
+              + factor(gender) + factor(degree_year) 
+              + factor(math_edu_level), data = reg_data)
 
 # Partial F-test for backwards elimination
 drop1(lm_full, test = "F")
@@ -642,8 +646,23 @@ This suggests that the negative association between statistics anxiety and attai
 
 Ultimately, for our report we have opted to use the Pearson correlation rather than the regression. The regression coefficient for STARS score describes the association only after adjusting for university, gender and degree year, so its value depends on which covariates are included in the model. Furthermore, it is measured in percentage points of grade per STARS point, thus, it is not a standardised effect size and can't be simply converted to Cohen's $d$. In contrast, Pearson correlation is already standardised, converts straightforwardly to $d$, and our scatterplot supports its linearity assumption. The residual diagnostics also showed slight heteroscedasticity and tail departures from normality, which added some uncertainty to the regression estimate. However, it is still important to note that the two approaches agree in direction and significance (Pearson $r$ = `r round(grades_cor_result$estimate, 2)`; regression $\beta = -0.083$, $p = 0.0002$), so the choice affects the precise magnitude of the effect rather than our overall conclusion.
 
+### Sensitivity Analysis
+To determine to what extent our data preparation affected our results, we carried out a sensitivity analysis. This involved repeating our main analysis many times, changing one data preparation decision at a time and calculating the resulting effect size.
 
-## Conclusions
+The decisions we investigated were:
+1. not removing those who failed one of our selected attention checks
+2. removing any participant who failed any of the 7 attention checks included in the full survey
+3. including those enrolled on degrees other than psychology
+4. not removing those with zero as their statistics module grade
+5. not removing participants from the University of Southampton
+
+For each iteration, we recalculated the Pearson's correlation coefficient, converted it to  Cohen's d effect size, and reported a 95% confidence interval.
+
+[code goes here]
+
+As we can see from the figure, all effect sizes remained largely consistent with that of our main analysis. This suggests that none of the individual data preparation decisions we made had a significant impact on our results, and that our results are robust to these alternative decisions.
+
+# Conclusions
 
 
-## References
+# References
