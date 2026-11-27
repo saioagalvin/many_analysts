@@ -48,7 +48,8 @@ smarvus_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
-    Q8.1_21 == 5
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
   )
 
 n_before <- nrow(smarvus_raw)
