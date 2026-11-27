@@ -21,6 +21,10 @@ header-includes:
 - \floatplacement{figure}{H}
 ---
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> b9271f52bcfca47ec64be034d0008a204526e052
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo      = TRUE,    # This shows all code from the main body but will need to be changed                         # for code we want invisible 
