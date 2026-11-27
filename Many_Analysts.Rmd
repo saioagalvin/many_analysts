@@ -203,9 +203,8 @@ As we can see, almost all grades at Southampton were reported as 65%. Of the 71 
 
 Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
-Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
 
-```{r grades_hist, fig.width=5, fig.height=3}
+```{r}
 # removing all observations that are missing grade data (assuming missing at random),
 # also remove zero grades, and University of Southampton
 smarvus_uk_cleangrades <- smarvus_uk_clean[
@@ -215,6 +214,12 @@ smarvus_uk_cleangrades <- smarvus_uk_clean[
 
 N <- nrow(smarvus_uk_cleangrades)
 mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
+```
+
+Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
+
+```{r grades_hist, fig.width=5, fig.height=3}
+# plotting grade distribution
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   geom_histogram(
