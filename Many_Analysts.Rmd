@@ -1,7 +1,8 @@
 ---
 title: "Many Analysts"
-authors: "Anonymous or not?"
-date: ""
+authors: "Ryan Barber, Ellie Hooper, Grace Galloway, Saioa Galvin, Louisa de Ste. Croix"
+affiliation: "The University of Edinburgh"
+date: "December 2026"
 bibliography: references.bib
 fontsize: 12pt
 output:
@@ -31,6 +32,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(patchwork)
 library(rstatix)
+library(kable)
 
 source('code.R')
 
@@ -51,7 +53,7 @@ We analysed data from UK Psychology undergraduates with university-reported stat
 ## Details of the Analysis
 ### Description of Dataset
 
-The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) [@SMARVUS_paper]. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
+The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) [@SMARVUS_paper]. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details. In the following sections, we discuss the data, what we decided to include in our final analysis and our methodology.
 
 ### Data Processing
 
@@ -59,7 +61,7 @@ The data is from an International Multi-Centre Study of Statistics and Mathemati
 smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE)
 ```
 
-We chose to include only universities in the UK in our analysis because it is the country with the most observations, at 2962, making up almost 24% of the data. Additionally, this ensures that our results are less likely to be affected by any other cultural or language-based differences between participants that could affect grades or statistics anxiety. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
+We chose to include only universities in the UK in our analysis because this ensures that our results aren't affected by any other cultural differences between participants that could affect grades or maths anxiety. Additionally, it is the country with the most observations, at 2962, making up almost 24% of the data. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
 
 ```{r uk_filter}
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
@@ -77,33 +79,76 @@ smarvus_filtered <- smarvus_uk %>%
     crt_check2 == "No"
   )
 
-# table to check percentage of responders removed after filtering by attention
-pct_fail_att <- smarvus_uk %>%
+# table to check percentage of responders removed after filtering by attention, sequentially
+seq_check_changes <- smarvus_uk %>%
   summarise(
-    n = n(),
-    pct_fail_amnesty = sum(attention_amnesty != "Yes", na.rm = TRUE) / n * 100,
-    pct_fail_check1 = sum(Q7.1_24 != 1, na.rm = TRUE) / n * 100,
-    pct_fail_check2 = sum(Q8.1_21 != 5, na.rm = TRUE) / n * 100,
-    pct_fail_crt_check2 = sum(crt_check2 != "No", na.rm = TRUE) / n * 100
-  )
+    initial   = n(),
+    amnesty   = sum(attention_amnesty == "Yes", na.rm = TRUE),
+    check1    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1, na.rm = TRUE),
+    check2    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5, na.rm = TRUE),
+    crtcheck2 = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5 & crt_check2 == "No", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "decision",
+    values_to = "remaining"
+  ) %>%
+  mutate(
+    excluded = lag(remaining, default = first(remaining)) - remaining
+  ) %>%
+  select(decision, excluded, remaining) 
+
+replacement_decision_names <- c(
+  "Initial", 
+  "Amnesty Check Failed", 
+  "Attention Check 1 Failed", 
+  "Attention Check 2 Failed", 
+  "Online Lookup Failed"
+)
+
+seq_check_changes <- seq_check_changes %>%
+  mutate(decision = replacement_decision_names)
+
+colnames(seq_check_changes) <- c("Values Removed", "Excluded", "Remaining")
+
+kable(seq_check_changes)
 ```
 
-Additionally, we filtered our data to only include Psychology undergraduate students, as they made up the vast majority of degree majors at the UK universities surveyed (94.5%), and this would also improve the strength of our comparisons between students, as different course demands and difficulty levels would also affect anxiety levels.
+Additionally, we filtered our data to only include Psychology undergraduate students that have or are studying statistics. We specifically chose to filter by Psychology degree major, as they made up the vast majority of degree majors at the UK universities surveyed (94.5%), and this would also improve the strength of our comparisons between students, as different course demands and difficulty levels would also affect anxiety levels.
 
 ```{r undergrad_stats}
-smarvus_filtered <- smarvus_filtered %>%
+smarvus_psych <- smarvus_filtered %>%
   filter(
-    eligibility_ug == "Yes",
-    eligibility_stats == "Yes",
     degree_major == "Psychology"
   )
 
-# table to check percentage of responders in each degree major
-pct_psych <- smarvus_filtered %>%
-  count(degree_major) %>%
+# table to check percentage of responders removed after filtering by degree major
+seq_degree_changes <- smarvus_filtered %>%
+  summarise(
+    initial = n(),
+    study_psychology = sum(degree_major == "Psychology", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "decision",
+    values_to = "remaining"
+  ) %>%
   mutate(
-    pct = n / sum(n) * 100
-  )
+    excluded = lag(remaining, default = first(remaining)) - remaining
+  ) %>%
+  select(decision, excluded, remaining) 
+
+replacement_decision_names <- c(
+  "Initial", 
+  "Non-Psychology Removed"
+)
+
+seq_degree_changes <- seq_degree_changes %>%
+  mutate(decision = replacement_decision_names)
+
+colnames(seq_degree_changes) <- c("Values Removed", "Excluded", "Remaining")
+
+seq_degree_changes
 ```
 
 Only 20 universities in the SMARVUS data provided grade information for the statistics course participants were taking at the time of the survey, and of these, 8 were UK universities. We chose to only use university-reported grades instead of student-reported grades, for reliability. To investigate the effect of statistics anxiety on attainment, we removed all missingness from the UK grades data, leading to 795 grade observations.
@@ -111,7 +156,7 @@ Only 20 universities in the SMARVUS data provided grade information for the stat
 ``` {r na_grades_by_degree}
 # convert all percentage grades to numeric
 # uk grade entries are all percentages or numeric, no letters
-smarvus_uk_clean <- smarvus_filtered %>%
+smarvus_clean <- smarvus_psych %>%
   mutate(grade_numeric = parse_number(grade, na = c("", "NA", "Not Available")))
 
 # table of grade data by uk uni
@@ -160,11 +205,10 @@ grade_na_byuni <- ggplot(
 grade_na_byuni
 ```
 
-The degree of missingness also varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations from third and fourth year students were almost completely missing. This could be because the only mandatory statistics courses take place in the 1st and 2nd years of students degrees and so only a few respondents have statistics module grades to report in 3rd and 4th year.
-
-
+The degree of missingness also varied largely across degree years. The majority of students surveyed were first and second year (92%) and over half of their grade data was missing. Around 97% of grade data for students in third year was missing, while 100% of grade data for students in fourth year being missing. As a result, it must be noted that our analysis may be less applicable to students in later years. 
 
 We then investigated the distribution of reported grades to check for reliability and any possible issues with the data. We also examined the distribution of the grades, to see that the majority lie around 65% with very few grades below ~30%. However, this plot is an average distribution and may not be the same across individual universities. A histogram of grades revealed a very large spike around 65%, so we looked at the grade data for each university, finding largely reasonable distributions apart from at the University of Southampton. The below bar graph shows their distribution of grades. This motivates standardising the grades so that we account for some courses/universities having different grade distributions.
+
 
 ```{r southampton_plot, fig.width=5, fig.height=3}
 # select reported grades from University of Southampton
@@ -205,8 +249,7 @@ As we can see, almost all grades at Southampton were reported as 65%. Of the 71 
 
 Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
-
-```{r}
+```{r grades_hist, fig.width=5, fig.height=3}
 # removing all observations that are missing grade data (assuming missing at random),
 # also remove zero grades, and University of Southampton
 smarvus_uk_cleangrades <- smarvus_uk_clean[
@@ -214,14 +257,45 @@ smarvus_uk_cleangrades <- smarvus_uk_clean[
     smarvus_uk_clean$grade_numeric != 0 &
     smarvus_uk_clean$university != "University of Southampton", ]
 
-N <- nrow(smarvus_uk_cleangrades)
-mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
+# table to check percentage of responders removed after filtering by missing grade
+seq_grade_changes <- smarvus_uk_clean %>%
+  summarise(
+    initial = n(),
+    missing_grade = sum(!is.na(grade_numeric), na.rm = TRUE),
+    zero_removed = sum(!is.na(grade_numeric) & smarvus_uk_clean$grade_numeric != 0, na.rm = TRUE),
+    southampton_removed = sum(!is.na(grade_numeric) 
+                              & smarvus_uk_clean$grade_numeric != 0
+                              & smarvus_uk_clean$university != "University of Southampton", 
+                              na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "decision",
+    values_to = "remaining"
+  ) %>%
+  mutate(
+    excluded = lag(remaining, default = first(remaining)) - remaining
+  ) %>%
+  select(decision, excluded, remaining) 
+
+replacement_decision_names <- c(
+  "Initial", 
+  "Missing Grades Removed",
+  "Zero Grades Removed",
+  "Southampton Grades Removed"
+)
+
+seq_grade_changes <- seq_grade_changes %>%
+  mutate(decision = replacement_decision_names)
+
+colnames(seq_grade_changes) <- c("Values Removed", "Excluded", "Remaining")
+
+seq_grade_changes
 ```
 
 Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
 
-```{r grades_hist, fig.width=5, fig.height=3}
-# plotting grade distribution
+```{r grades_hist}
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   geom_histogram(
