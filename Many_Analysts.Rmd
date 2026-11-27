@@ -73,8 +73,7 @@ smarvus_filtered <- smarvus_uk %>%
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
     Q8.1_21 == 5,
-    Q9.1_22 == 1,
-    crt_check2 == "No"
+    Q9.1_22 == 1
   )
 
 # table to check percentage of responders removed after filtering by attention, sequentially
