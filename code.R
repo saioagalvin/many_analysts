@@ -48,7 +48,8 @@ smarvus_filtered <- smarvus_raw %>%
   filter(
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
-    Q8.1_21 == 5
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
   )
 
 n_before <- nrow(smarvus_raw)
@@ -326,7 +327,16 @@ ggplot(smarvus_uk_gradecheck, aes(x = university, y = grade_numeric)) +
 
 #actually do bar graph of each to look closer
 grades_byuni <- smarvus_uk_gradecheck %>%
-  filter(university %in% unis_to_plot) %>%
+  filter(university %in% c(
+    "Anglia Ruskin University",
+    "Bournemouth University",
+    "Queen's University Belfast",
+    "Teesside University",
+    "University of Bradford",
+    "University of Lincoln",
+    "University of Southampton",
+    "University of Sussex"
+    )) %>%
   mutate(
     grade_band = cut(
       grade_numeric,

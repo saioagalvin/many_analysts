@@ -43,7 +43,7 @@ d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_resul
 
 ## Summary of Analysis Approach
 
-We analysed data from UK Psychology undergraduates with university-reported statistics module grades who passed relevant attention checks. Statistics anxiety was measured using the total score of the 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis examined the relationship between total STARS score and statistics module grade (%), explored using Pearson's correlation coefficient, converted to Cohen's d. To investigate the reliability of this result, additional explorations examined the correlation between maths and statistics anxiety, and whether the STARS-attainment relationship remained after accounting for other variables in a linear regression. These final analyses were exploratory and do not establish causation.
+We analysed data from UK Psychology undergraduates with university-reported statistics module grades who passed relevant attention checks. Statistics anxiety was measured using the total score of the 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis examined the relationship between total STARS score and statistics module grade (%), explored using Pearson's correlation coefficient, converted to Cohen's d. To investigate the reliability of this result, additional explorations included the correlation between maths and statistics anxiety so we could confirm that the use of "maths" vs "statistics" in the survey questions did not bias results. Additionally, a linear regression attempting to control for university, gender, and degree year was included. These final analyses were exploratory and do not aim to establish causation, instead ensuring that our final result still seemed reasonable when accounting for these other factors.
 
 
 ## Details of the Analysis
@@ -63,7 +63,7 @@ We chose to include only universities in the UK in our analysis because it is th
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
 ```
  
-Six "attention checks" were built in to the survey. We used the first 2 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%), as well as students that responded "Yes" to the question "You have just answered three reasoning problems. Did you look any of the answers up online?" (1.76%). This was to preserve the reliability of responses.
+Six "attention checks" were built in to the survey. We used the first 3 of these to filter out any participants who weren't paying attention to questions about their statistics anxiety levels (9.18%), as this would invalidate their other responses.These attention checks were chosen as they come at the end of each section of data that was used, we did not want to exclude useable data based on checks that came after data that we did not need since people may lose attention towards the end of the survey but this does not make their early responses unreliable. Additionally, we filtered out students who responded "No" to the question "Please indicate whether you feel you have answered the previous questions carefully and truthfully" (0.91%), as well as students that responded "Yes" to the question "You have just answered three reasoning problems. Did you look any of the answers up online?" (1.76%). This was to preserve the reliability of responses.
 
 ```{r attention_checks}
 smarvus_filtered <- smarvus_uk %>%
@@ -71,6 +71,7 @@ smarvus_filtered <- smarvus_uk %>%
     attention_amnesty == "Yes",
     Q7.1_24 == 1,
     Q8.1_21 == 5,
+    Q9.1_22 == 1,
     crt_check2 == "No"
   )
 
@@ -157,10 +158,11 @@ grade_na_byuni <- ggplot(
 grade_na_byuni
 ```
 
-The degree of missingness also varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations from third and fourth year students were almost completely missing.
+The degree of missingness also varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations from third and fourth year students were almost completely missing. This could be because the only mandatory statistics courses take place in the 1st and 2nd years of students degrees and so only a few respondents have statistics module grades to report in 3rd and 4th year.
 
 
-We then investigated the distribution of reported grades to check for reliability and any possible issues with the data. A histogram of grades revealed a very large spike around 65%, so we looked at the grade data for each university, finding largely reasonable distributions apart from at the University of Southampton. The below bar graph shows their distribution of grades.
+
+We then investigated the distribution of reported grades to check for reliability and any possible issues with the data. We also examined the distribution of the grades, to see that the majority lie around 65% with very few grades below ~30%. However, this plot is an average distribution and may not be the same across individual universities. A histogram of grades revealed a very large spike around 65%, so we looked at the grade data for each university, finding largely reasonable distributions apart from at the University of Southampton. The below bar graph shows their distribution of grades. This motivates standardising the grades so that we account for some courses/universities having different grade distributions.
 
 ```{r southampton_plot, fig.width=5, fig.height=3}
 # select reported grades from University of Southampton
@@ -201,9 +203,8 @@ As we can see, almost all grades at Southampton were reported as 65%. Of the 71 
 
 Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
-Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
 
-```{r grades_hist, fig.width=5, fig.height=3}
+```{r}
 # removing all observations that are missing grade data (assuming missing at random),
 # also remove zero grades, and University of Southampton
 smarvus_uk_cleangrades <- smarvus_uk_clean[
@@ -213,6 +214,12 @@ smarvus_uk_cleangrades <- smarvus_uk_clean[
 
 N <- nrow(smarvus_uk_cleangrades)
 mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
+```
+
+Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
+
+```{r grades_hist, fig.width=5, fig.height=3}
+# plotting grade distribution
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   geom_histogram(
@@ -291,6 +298,7 @@ stars_attainment <- ggplot(smarvus_uk_scored, aes(x = stars_score, y = grade_num
     x = "Total STARS Score (23 - 115)",
     y = "Statistics Module Grade (%)"
   ) +
+  scale_y_continuous(limits = c(20, 100)) +
   theme_minimal()
 
 stars_attainment
