@@ -21,13 +21,9 @@ header-includes:
 - \floatplacement{figure}{H}
 ---
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b9271f52bcfca47ec64be034d0008a204526e052
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo      = TRUE,    # This shows all code from the main body but will need to be changed                         # for code we want invisible 
+  echo      = TRUE,       
   message   = FALSE, 
   warning   = FALSE
 )
@@ -37,14 +33,12 @@ library(patchwork)
 library(rstatix)
 library(knitr)
 
-source('code.R')
-
 ```
 
 
 # Effect Size Summary
 
-d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_result$conf.int[1]), 2)`, `r round(effectsize::r_to_d(grades_cor_result$conf.int[2]), 2)`] based on N = `r N`.
+d = -0.30, 95% CI [-0.45, -0.15] based on N = 531.
 
 
 # Summary of Analysis Approach
@@ -86,7 +80,8 @@ seq_check_changes <- smarvus_uk %>%
     initial   = n(),
     amnesty   = sum(attention_amnesty == "Yes", na.rm = TRUE),
     check1    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1, na.rm = TRUE),
-    check2    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5, na.rm = TRUE)
+    check2    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5, na.rm = TRUE),
+    check3    = sum(attention_amnesty == "Yes" & Q7.1_24 == 1 & Q8.1_21 == 5 & Q9.1_22 == 1, na.rm = TRUE)
   ) %>%
   pivot_longer(
     cols = everything(),
@@ -102,7 +97,8 @@ replacement_decision_names <- c(
   "Initial", 
   "Amnesty Check Failed", 
   "Attention Check 1 Failed", 
-  "Attention Check 2 Failed"
+  "Attention Check 2 Failed",
+  "Attention Check 3 Failed"
 )
 
 seq_check_changes <- seq_check_changes %>%
@@ -407,7 +403,7 @@ To investigate the relationship between statistics anxiety and attainment, we lo
 Below is a scatterplot of total STARS score against statistics module grades. We can see the fitted regression line and 95% confidence interval showing the estimated statistics module grade at each STARS score. 
 ```{r, fig.width=5, fig.height=3}
 stars_attainment <- ggplot(smarvus_uk_scored, 
-                           aes(x = stars_score, y = grade_numeric)) +
+                           aes(x = stars_score, y = grade_100)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
   labs(
@@ -422,7 +418,7 @@ stars_attainment <- ggplot(smarvus_uk_scored,
 stars_attainment
 ```
 
-This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around  `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 28)))`%, while for a STARS score of 115 it is around `r round(predict(lm(grade_numeric ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 115)))`%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was `r round(grades_cor_result$estimate, 2)`, with $p<0.001$ , and a 95% confidence interval of [`r round(grades_cor_result$conf.int[1], 2)`, `r round(grades_cor_result$conf.int[2], 2)`]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
+This plot suggests there is a weakly negative relationship between statistics anxiety and statistics module grades. The predicted grade at a STARS score of 28 is around  `r round(predict(lm(grade_100 ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 28)))`%, while for a STARS score of 115 it is around `r round(predict(lm(grade_100 ~ stars_score, data = smarvus_uk_scored), data.frame(stars_score = 115)))`%. Using Pearson's correlation coefficient to measure the strength of the relationship, we found that the correlation was `r round(grades_cor_result$estimate, 2)`, with $p<0.001$ , and a 95% confidence interval of [`r round(grades_cor_result$conf.int[1], 2)`, `r round(grades_cor_result$conf.int[2], 2)`]. Taken together, these results indicate a weak but statistically significant negative relationship between statistics anxiety and attainment. 
 
 However, due to the nature of the study, we cannot conclude whether this relationship is causal or whether other factors contributed to or explain the observed relationship.
 We additionally converted the correlation coefficient into our Cohen's d effect size value, and found an effect size of `r round(grades_d, 2)`. As our variables are continuous, calculating Cohen's d directly from group means was not appropriate. We considered splitting participants manually into two groups ("high" and "low" anxiety), but decided against this as the splitting would be arbitrary and would result in loss of information.
