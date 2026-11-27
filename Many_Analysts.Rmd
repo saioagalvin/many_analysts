@@ -43,10 +43,11 @@ d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_resul
 
 ## Summary of Analysis Approach
 
-We analysed data from UK Psychology undergraduate students who had university-reported statistics module grades and passed all attention check questions. Statistics anxiety was measured using the sum of responses to the 23 statistics anxiety-based questions (referred to as STARS). Our main analysis was of the relationship between total STARS score and statistics module grade (in %), explored using Pearson's correlation coefficient and converted to Cohen's d. Additional explorations included the correlation between maths and statistics anxiety, and a linear regression attempting to control for university, gender, and degree year. These final analyses were exploratory and do not aim to establish causation.
+We analysed data from UK Psychology undergraduate students who had university-reported statistics module grades and passed relevant attention checks. Statistics anxiety was measured using the total score of 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis was of the relationship between total STARS score and statistics module grade (in %), explored using Pearson's correlation coefficient and converted to Cohen's d. Additional explorations included the correlation between maths and statistics anxiety, and a linear regression attempting to control for university, gender, and degree year. These final analyses were exploratory and do not aim to establish causation.
 
 
 ## Details of the Analysis
+### Description of Dataset
 
 The data is from an International Multi-Centre Study of Statistics and Mathematics Anxieties and Related Variables in University Students (the SMARVUS Dataset) [@SMARVUS_paper]. This dataset contains survey responses from 12,570 students from 100 universities in 35 countries. They attempted to measure anxieties (statistics and mathematics), collected demographics, previous mathematics grades, self-reported and official statistics grades, and statistics module details.
 
@@ -56,7 +57,7 @@ The data is from an International Multi-Centre Study of Statistics and Mathemati
 smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE)
 ```
 
-We chose to include only universities in the UK in our analysis because it is the country with the most observations, at 2962, making up almost 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between participants that could affect grades or maths anxiety. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
+We chose to include only universities in the UK in our analysis because it is the country with the most observations, at 2962, making up almost 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between participants that could affect grades or statistics anxiety. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
 
 ```{r uk_filter}
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
@@ -102,16 +103,16 @@ pct_psych <- smarvus_filtered %>%
   )
 ```
 
-Only 20 universities in the SMARVUS data provided grade information for the statistics course responders were taking at the time of the survey, and of these, 8 were UK universities. We chose to only use university-reported grades instead of student-reported grades, for reliability. To investigate the effect of statistics anxiety on attainment, we removed all missingness from the UK grades data, leading to 795 grade observations.
+Only 20 universities in the SMARVUS data provided grade information for the statistics course participants were taking at the time of the survey, and of these, 8 were UK universities. We chose to only use university-reported grades instead of student-reported grades, for reliability. To investigate the effect of statistics anxiety on attainment, we removed all missingness from the UK grades data, leading to 795 grade observations.
 
 ``` {r na_grades_by_degree}
 # convert all percentage grades to numeric
 # uk grade entries are all percentages or numeric, no letters
-smarvus_clean <- smarvus_filtered %>%
+smarvus_uk_clean <- smarvus_filtered %>%
   mutate(grade_numeric = parse_number(grade, na = c("", "NA", "Not Available")))
 
 # table of grade data by uk uni
-uk_university_nas <- smarvus_clean %>%
+uk_university_nas <- smarvus_uk_clean %>%
   group_by(university) %>%
   summarise(
     n = n(),
@@ -158,12 +159,59 @@ grade_na_byuni
 
 The degree of missingness also varied largely across degree years, with the majority of observations being in first and second year and over half the grades for these observations being missing. The grade data from the few observations from third and fourth year students were almost completely missing.
 
-We also examined the distribution of the grades, to see that the majority lie around 65%.
+
+We then investigated the distribution of reported grades to check for reliability and any possible issues with the data. A histogram of grades revealed a very large spike around 65%, so we looked at the grade data for each university, finding largely reasonable distributions apart from at the University of Southampton. The below bar graph shows their distribution of grades.
+
+```{r southampton_plot, fig.width=5, fig.height=3}
+# select reported grades from University of Southampton
+grades_southampton <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric) &
+    smarvus_uk_clean$university == "University of Southampton",
+]
+
+southampton_plot <- ggplot(
+  grades_southampton,
+  aes(x = factor(grade_numeric))
+) +
+  geom_bar(
+    fill = "steelblue3",
+    colour = "white"
+  ) +
+  geom_text(
+    stat = "count",
+    aes(label = after_stat(count)),
+    vjust = -0.5,
+    size = 3
+  ) +
+  ylim(0, 80) +
+  labs(
+    title = "Grade Distribution: University of Southampton",
+    x = "Statistics Module Grade (%)",
+    y = "Number of students"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8)
+  )
+
+southampton_plot
+```
+As we can see, almost all grades at Southampton were reported as 65%. Of the 71 participants from Southampton that were still included after our initial data preparation, 68 (95.8%) of them had an officially reported grade of 65. We additionally checked that it wasn't our data cleaning that had led to this issue, but found the same problem when including *all* University of Southampton participants with officially reported grades. This led us to conclude that the grade data from Southampton was unreliable, and perhaps 65 was some kind of placeholder value rather than truly achieved results. As grade data is key to our analysis, we therefore chose to exclude the University of Southampton from our analysis.
+
+Additionally, we also chose to exclude those with a reported grade of 0, as we again believed this was likely to represent non-submission rather than a genuine attempt at an assignment, therefore does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision.
+
+Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
 
 ```{r grades_hist, fig.width=5, fig.height=3}
-# removing all observations that are missing grade data
-# assuming missing at random
-smarvus_uk_cleangrades <- smarvus_uk_clean[!is.na(smarvus_uk_clean$grade_numeric), ]
+# removing all observations that are missing grade data (assuming missing at random),
+# also remove zero grades, and University of Southampton
+smarvus_uk_cleangrades <- smarvus_uk_clean[
+  !is.na(smarvus_uk_clean$grade_numeric) &
+    smarvus_uk_clean$grade_numeric != 0 &
+    smarvus_uk_clean$university != "University of Southampton", ]
+
+N <- nrow(smarvus_uk_cleangrades)
+mean_grade <- mean(smarvus_uk_cleangrades$grade_numeric)
 
 grades_hist <- ggplot(smarvus_uk_cleangrades, aes(x = grade_numeric)) +
   geom_histogram(
@@ -264,21 +312,11 @@ We firstly examined the relationships between different measures of statistics a
 
 The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
 
-We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.76 when using the original measures and 0.79 when using the adapted measures), which means it is hard to distinguish the relationship between statistics anxiety and attainment compared to maths anxiety and attainment.
+We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.77 when using the original measures and 0.79 when using the adapted measures), which means it is hard to distinguish the relationship between statistics anxiety and attainment compared to maths anxiety and attainment.
 
 ```{r, fig.width=5, fig.height=3}
 
-# STARS Score 
-stars_totals <- smarvus_uk_cleangrades %>%
-  subset(select = -c(Q7.1_24)) %>%
-  pivot_longer(
-    cols = starts_with("Q7.1_"),
-    values_to = "STARS"
-  ) %>%
-  summarise(
-    .by = unique_id,
-    stars_score = sum(STARS, na.rm = TRUE)
-  )
+# STARS Score is as calculated previously
 
 # STARS-M Score 
 stars_m_totals <- smarvus_uk_cleangrades %>%
@@ -289,7 +327,7 @@ stars_m_totals <- smarvus_uk_cleangrades %>%
   ) %>%
   summarise(
     .by = unique_id,
-    stars_m_score = sum(STARS_M, na.rm = TRUE)
+    stars_m_score = sum(STARS_M) 
   )
 
 # R-MARS Score 
@@ -301,7 +339,7 @@ rmars_totals <- smarvus_uk_cleangrades %>%
   ) %>%
   summarise(
     .by = unique_id,
-    rmars_score = sum(R_MARS, na.rm = TRUE)
+    rmars_score = sum(R_MARS)
   )
 
 # R-MARS-S Score 
@@ -313,7 +351,7 @@ rmars_s_totals <- smarvus_uk_cleangrades %>%
   ) %>%
   summarise(
     .by = unique_id,
-    rmars_s_score = sum(R_MARS_S, na.rm = TRUE)
+    rmars_s_score = sum(R_MARS_S)
   )
 
 # join into a single df
@@ -342,7 +380,6 @@ ggplot(cor_long, aes(Var1, Var2, fill = Freq)) +
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
 
 #### Exploratory Multiple Linear Regression
 
@@ -397,26 +434,26 @@ Noting that there is more data for first and second year students in comparison 
 
 Finally, attainment vs STARS score varies by the highest level of maths education prior to university, with students who took A-Level Maths having higher grades for each STARS score in comparison to students who only took GCSE Maths.
 
-Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for correlation between covariates, since strongly correlated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. The following correlation heatmap uses Cramer's V score to find the correlation between the categorical factors. 
+Therefore we have evidence to include these covariates in our multiple regression model. It is also important to check for correlation between covariates, since strongly correlated predictors can inflate the standard errors of coefficient estimates and make them difficult to interpret. The following correlation heatmap uses Cramér's V score to find the association between the categorical factors. 
 
-```{r reg_pairplot, fig.width=5, fig.height=3}
+```{r reg_cramers_v, fig.width=5, fig.height=3}
 
 cat_vars <- c("gender", "degree_year", "math_edu_level", "university")
 
 cv_long <- expand_grid(v1 = cat_vars, v2 = cat_vars) %>%
   mutate(cramer_v = map2_dbl(v1, v2, ~ {
-    tab <- table(smarvus_uk_scored[[.x]], smarvus_uk_scored[[.y]])
+    tab <- table(reg_data[[.x]], reg_data[[.y]])
     suppressWarnings(rstatix::cramer_v(tab))
     }))
 
 cv_plot <- ggplot(cv_long, aes(v1, v2, fill = cramer_v)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "green4", high = "firebrick", mid = "yellow2", 
-                       midpoint = 0, limit = c(-1, 1), name = "Correlation (r)") +
+                       midpoint = 0.5, limit = c(0, 1), name = "Cramér's V") +
   geom_text(aes(label = round(cramer_v, 2)), color = "black", size = 4.5) +
   theme_minimal() +
   labs(
-    title = "Correlation Heatmap of Covariates",
+    title = "Association Between Covariates (Cramér's V)",
     x = "", 
     y = ""
   ) +
@@ -425,7 +462,7 @@ cv_plot <- ggplot(cv_long, aes(v1, v2, fill = cramer_v)) +
 cv_plot
 ```
 
-From this plot, we saw that the highest correlation is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However the correlation isn't very large, so multicollinearity is unlikely to be a problem and we did not make any adjustment for it when creating the model. 
+From this plot, we saw that the strongest association is between university and degree year, which indicates that the number of students in each degree year wasn't distributed the same across the universities for our data. However, none of the associations are very large, so there is no evidence of redundancy amongst the covariates, therefore we did not make any adjustment for this when creating the model. 
 
 ##### Model fitting
 
