@@ -43,7 +43,7 @@ d = `r round(grades_d, 2)`, 95% CI [`r round(effectsize::r_to_d(grades_cor_resul
 
 ## Summary of Analysis Approach
 
-We analysed data from UK Psychology undergraduate students who had university-reported statistics module grades and passed relevant attention checks. Statistics anxiety was measured using the total score of 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis was of the relationship between total STARS score and statistics module grade (in %), explored using Pearson's correlation coefficient and converted to Cohen's d. Additional explorations included the correlation between maths and statistics anxiety, and a linear regression attempting to control for university, gender, and degree year. These final analyses were exploratory and do not aim to establish causation.
+We analysed data from UK Psychology undergraduates with university-reported statistics module grades who passed relevant attention checks. Statistics anxiety was measured using the total score of the 23 Statistics Anxiety Rating Scale (STARS) questions. Our main analysis examined the relationship between total STARS score and statistics module grade (%), explored using Pearson's correlation coefficient, converted to Cohen's d. To investigate the reliability of this result, additional explorations examined the correlation between maths and statistics anxiety, and whether the STARS-attainment relationship remained after accounting for other variables in a linear regression. These final analyses were exploratory and do not establish causation.
 
 
 ## Details of the Analysis
@@ -57,7 +57,7 @@ The data is from an International Multi-Centre Study of Statistics and Mathemati
 smarvus_raw <- read_csv("smarvus_complete_050524.csv", show_col_types = FALSE)
 ```
 
-We chose to include only universities in the UK in our analysis because it is the country with the most observations, at 2962, making up almost 24% of the data. Additionally, this ensures that our results aren't affected by any other cultural differences between participants that could affect grades or statistics anxiety. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
+We chose to include only universities in the UK in our analysis because it is the country with the most observations, at 2962, making up almost 24% of the data. Additionally, this ensures that our results are less likely to be affected by any other cultural or language-based differences between participants that could affect grades or statistics anxiety. Finally, all UK universities reported their grades on a percentage scale, preventing possible issues arising from different grading scales.
 
 ```{r uk_filter}
 smarvus_uk <- smarvus_raw[smarvus_raw$country %in% c("England", "Scotland", "Northern Ireland"), ]
@@ -196,9 +196,10 @@ southampton_plot <- ggplot(
 
 southampton_plot
 ```
+
 As we can see, almost all grades at Southampton were reported as 65%. Of the 71 participants from Southampton that were still included after our initial data preparation, 68 (95.8%) of them had an officially reported grade of 65. We additionally checked that it wasn't our data cleaning that had led to this issue, but found the same problem when including *all* University of Southampton participants with officially reported grades. This led us to conclude that the grade data from Southampton was unreliable, and perhaps 65 was some kind of placeholder value rather than truly achieved results. As grade data is key to our analysis, we therefore chose to exclude the University of Southampton from our analysis.
 
-Additionally, we also chose to exclude those with a reported grade of 0, as we again believed this was likely to represent non-submission rather than a genuine attempt at an assignment, therefore does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision.
+Additionally, we also chose to exclude those with a reported grade of 0, as we believed this was likely to represent non-submission rather than a genuine attempt at an assignment, and therefore this does not give a good indication of attainment. However in our sensitivity analysis in a later section, we assess the impact of this decision, as it is possible that non-submission could be a result of extreme anxiety, and thus we could be losing information.
 
 Below we see the distribution of the grades from our final cleaned dataset, and see that the majority lie around 65%. Specifically, the mean grade was `r round(mean_grade, 2)`%.
 
@@ -312,7 +313,7 @@ We firstly examined the relationships between different measures of statistics a
 
 The dataset had questions used to measure statistics anxiety (stars_score) and questions used to measure maths anxiety (rmars_score). The researchers created additional measures by adapting the wording of the questions: so the statistics questions were posed again but with the word "statistics" replaced by "maths" (stars_m_score) and vice versa, so the maths questions were posed again but with the word "maths" replaced by "statistics" (rmars_s_score). 
 
-We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.77 when using the original measures and 0.79 when using the adapted measures), which means it is hard to distinguish the relationship between statistics anxiety and attainment compared to maths anxiety and attainment.
+We can see in the heatmap below that the correlations between the original and adapted measures for both statistics and maths were very high (0.86 for statistics and 0.85 for maths), suggesting the phrasing of the questions is unlikely to be biasing the results. However, there was also a strong correlation between statistics and maths anxiety (0.77 when using the original measures and 0.79 when using the adapted measures). This suggests that the two types of anxiety are closely related, which means it is hard to determine whether any relationship with attainment is specific to statistics anxiety or whether it also reflects a more general relationship with maths anxiety.
 
 ```{r, fig.width=5, fig.height=3}
 
