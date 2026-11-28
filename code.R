@@ -878,7 +878,7 @@ print(grades_rmarss_d)
 grades_rmarss_CI <- effectsize::r_to_d(r= grades_rmarss_cor_result$conf.int[1:2])
 print(grades_rmarss_CI)
 
-no_attention <- smarvus_uk %>%
+no_attention_base <- smarvus_uk %>%
   filter(degree_major == "Psychology") %>%
   mutate(
     grade_numeric = parse_number(
@@ -890,9 +890,20 @@ no_attention <- smarvus_uk %>%
     !is.na(grade_numeric),
     grade_numeric != 0,
     university != "University of Southampton"
+  )  %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
-no_attention <- no_attention %>%
+no_attention <- no_attention_base %>%
   subset(select = -c(Q7.1_24)) %>%
   pivot_longer(
     cols = starts_with("Q7.1_"),
@@ -903,8 +914,8 @@ no_attention <- no_attention %>%
     stars_score = sum(STARS)
   ) %>%
   left_join(
-    no_attention %>%
-      distinct(unique_id, grade_numeric),
+    no_attention_base %>%
+      distinct(unique_id, grade_numeric, grade_standardised),
     by = "unique_id"
   )
 
@@ -925,6 +936,17 @@ not_just_psych_base <- smarvus_uk %>%
     !is.na(grade_numeric),
     grade_numeric != 0,
     university != "University of Southampton"
+  ) %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
 not_just_psych <- not_just_psych_base %>%
@@ -939,7 +961,7 @@ not_just_psych <- not_just_psych_base %>%
   ) %>%
   left_join(
     not_just_psych_base %>%
-      distinct(unique_id, grade_numeric),
+      distinct(unique_id, grade_numeric, grade_standardised),
     by = "unique_id"
   )
 
@@ -964,6 +986,17 @@ full_attention_check_base <- smarvus_uk %>%
     !is.na(grade_numeric),
     grade_numeric != 0,
     university != "University of Southampton"
+  )  %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
 full_attention_check <- full_attention_check_base %>%
@@ -978,7 +1011,7 @@ full_attention_check <- full_attention_check_base %>%
   ) %>%
   left_join(
     full_attention_check_base %>%
-      distinct(unique_id, grade_numeric),
+      distinct(unique_id, grade_numeric, grade_standardised),
     by = "unique_id"
   )
 
@@ -999,6 +1032,17 @@ no_zeros_base <- smarvus_uk %>%
   filter(
     !is.na(grade_numeric),
     university != "University of Southampton"
+  )  %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
 no_zeros <- no_zeros_base %>%
@@ -1013,7 +1057,7 @@ no_zeros <- no_zeros_base %>%
   ) %>%
   left_join(
     no_zeros_base %>%
-      distinct(unique_id, grade_numeric),
+      distinct(unique_id, grade_numeric, grade_standardised),
     by = "unique_id"
   )
 
@@ -1034,6 +1078,17 @@ with_southampton_base <- smarvus_uk %>%
   filter(
     !is.na(grade_numeric),
     grade_numeric != 0
+  )  %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
 with_southampton <- with_southampton_base %>%
@@ -1048,7 +1103,7 @@ with_southampton <- with_southampton_base %>%
   ) %>%
   left_join(
     with_southampton_base %>%
-      distinct(unique_id, grade_numeric),
+      distinct(unique_id, grade_numeric, grade_standardised),
     by = "unique_id"
   )
 
@@ -1070,6 +1125,17 @@ main_analysis_base <- smarvus_uk %>%
     !is.na(grade_numeric),
     grade_numeric != 0,
     university != "University of Southampton"
+  ) %>%
+  group_by(grade_module_name) %>%
+  mutate(
+    grade_standardised = as.numeric(scale(grade_numeric))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    mean_grade_overall = mean(grade_numeric),
+    sd_grade_overall = sd(grade_numeric),
+    grade_100 = grade_standardised * sd_grade_overall +
+      mean_grade_overall
   )
 
 main_analysis <- main_analysis_base %>%
@@ -1084,6 +1150,42 @@ main_analysis <- main_analysis_base %>%
   ) %>%
   left_join(
     main_analysis_base %>%
+      distinct(unique_id, grade_numeric, grade_standardised),
+    by = "unique_id"
+  )
+
+no_standardisation_base <- smarvus_uk %>%
+  filter(degree_major == "Psychology") %>%
+  filter(
+    attention_amnesty == "Yes",
+    Q7.1_24 == 1,
+    Q8.1_21 == 5,
+    Q9.1_22 == 1
+  ) %>%
+  mutate(
+    grade_numeric = parse_number(
+      grade,
+      na = c("", "NA", "Not Available")
+    )
+  ) %>%
+  filter(
+    !is.na(grade_numeric),
+    grade_numeric != 0,
+    university != "University of Southampton"
+  ) 
+
+no_standardisation <- no_standardisation_base %>%
+  subset(select = -c(Q7.1_24)) %>%
+  pivot_longer(
+    cols = starts_with("Q7.1_"),
+    values_to = "STARS"
+  ) %>%
+  summarise(
+    .by = unique_id,
+    stars_score = sum(STARS)
+  ) %>%
+  left_join(
+    no_standardisation_base %>%
       distinct(unique_id, grade_numeric),
     by = "unique_id"
   )
@@ -1100,7 +1202,7 @@ forest_list <- lapply(names(datasets), function(name) {
   
   cor_result <- cor.test(
     dat$stars_score,
-    dat$grade_numeric
+    dat$grade_standardised
   )
   
   d_est <- effectsize::r_to_d(cor_result$estimate)
@@ -1114,8 +1216,34 @@ forest_list <- lapply(names(datasets), function(name) {
     CI_low = as.numeric(d_ci[1]),
     CI_high = as.numeric(d_ci[2]))
 })
+dat <- no_standardisation
+
+cor_result <- cor.test(
+  dat$stars_score,
+  dat$grade_numeric
+)
+
+d_est <- effectsize::r_to_d(cor_result$estimate)
+
+d_ci <- effectsize::r_to_d(
+  r = cor_result$conf.int[1:2])
+
+data.frame(
+  Variable = "no_standardisation",
+  d = as.numeric(d_est),
+  CI_low = as.numeric(d_ci[1]),
+  CI_high = as.numeric(d_ci[2]))
 
 forest_data <- do.call(rbind, forest_list)
+forest_data <- rbind(
+  forest_data,
+  data.frame(
+    Variable = "no_standardisation",
+    d = as.numeric(d_est),
+    CI_low = as.numeric(d_ci[1]),
+    CI_high = as.numeric(d_ci[2])
+  )
+)
 
 forest_data <- forest_data %>%
   mutate(Label = sprintf("%.2f [%.2f, %.2f]",
